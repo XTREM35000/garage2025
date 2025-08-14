@@ -1,0 +1,16 @@
+Structure du projet (exclusions : node_modules, dist, public, nhost, .vscode, .nuxt, .output, .git, .bolt, .next)
+========================================
+
+📁 images
+  📄 page1.jpg
+  📄 page1.webp
+  📄 page2.jpg
+  📄 page2.webp
+  📄 page3.jpg
+  📄 page3.webp
+  📄 page4.jpg
+  📄 page4.webp
+  📄 page5.jpg
+  📄 page5.webp
+📄 liste.mjs
+📄 project_structure.txt

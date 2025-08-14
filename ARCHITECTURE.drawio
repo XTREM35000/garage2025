@@ -1,0 +1,192 @@
+<mxfile host="app.diagrams.net" modified="2024-01-20T10:00:00.000Z" agent="5.0" etag="abc123" version="22.1.16" type="device">
+  <diagram name="Garage 2024 Architecture" id="architecture">
+    <mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Frontend Layer -->
+        <mxCell id="frontend" value="Frontend React/TypeScript" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="40" y="40" width="200" height="200" as="geometry" />
+        </mxCell>
+
+        <mxCell id="components" value="Components" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="frontend">
+          <mxGeometry y="30" width="200" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="auth" value="• Auth (Login/Register)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="frontend">
+          <mxGeometry y="60" width="200" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="brain" value="• BrainModal (Setup)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="frontend">
+          <mxGeometry y="80" width="200" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="splash" value="• SplashScreen" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="frontend">
+          <mxGeometry y="100" width="200" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="ui" value="• UI Components (shadcn)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="frontend">
+          <mxGeometry y="120" width="200" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="pages" value="Pages" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="frontend">
+          <mxGeometry y="150" width="200" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="dashboard" value="• Dashboard, Clients, Repairs" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="frontend">
+          <mxGeometry y="170" width="200" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- State Management -->
+        <mxCell id="state" value="State Management" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="280" y="40" width="180" height="120" as="geometry" />
+        </mxCell>
+
+        <mxCell id="contexts" value="Contexts" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="state">
+          <mxGeometry y="30" width="180" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="theme" value="• ThemeContext (Dark/Light)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="state">
+          <mxGeometry y="50" width="180" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="hooks" value="Hooks" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="state">
+          <mxGeometry y="80" width="180" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="brainhook" value="• useBrainSetup" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="state">
+          <mxGeometry y="100" width="180" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Backend Layer -->
+        <mxCell id="backend" value="Backend Supabase" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="500" y="40" width="200" height="200" as="geometry" />
+        </mxCell>
+
+        <mxCell id="database" value="Database" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="backend">
+          <mxGeometry y="30" width="200" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="tables" value="• profiles, garage_config" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="backend">
+          <mxGeometry y="50" width="200" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="tables2" value="• clients, vehicles, repairs" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="backend">
+          <mxGeometry y="70" width="200" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="tables3" value="• stock, notifications" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="backend">
+          <mxGeometry y="90" width="200" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="functions" value="Edge Functions" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="backend">
+          <mxGeometry y="120" width="200" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="func1" value="• create-admin" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="backend">
+          <mxGeometry y="140" width="200" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="func2" value="• generate-report" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="backend">
+          <mxGeometry y="160" width="200" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="func3" value="• notify-stock-alert" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="backend">
+          <mxGeometry y="180" width="200" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Data Flow -->
+        <mxCell id="flow1" value="" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="frontend" target="state">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="240" y="140" as="sourcePoint" />
+            <mxPoint x="280" y="100" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="flow2" value="" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="state" target="backend">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="460" y="100" as="sourcePoint" />
+            <mxPoint x="500" y="140" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Configuration Layer -->
+        <mxCell id="config" value="Configuration" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="40" y="280" width="660" height="120" as="geometry" />
+        </mxCell>
+
+        <mxCell id="config1" value="• Currency: XOF (FCFA)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="config">
+          <mxGeometry y="30" width="200" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="config2" value="• Language: French" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="config">
+          <mxGeometry y="50" width="200" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="config3" value="• Theme: Dark/Light" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="config">
+          <mxGeometry y="70" width="200" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="config4" value="• Phone: +225 format" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="config">
+          <mxGeometry y="90" width="200" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="config5" value="• Local Storage" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="config">
+          <mxGeometry x="220" y="30" width="200" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="config6" value="• Garage Data" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="config">
+          <mxGeometry x="220" y="50" width="200" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="config7" value="• User Session" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="config">
+          <mxGeometry x="220" y="70" width="200" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="config8" value="• Settings" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="config">
+          <mxGeometry x="220" y="90" width="200" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="config9" value="• Supabase" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="config">
+          <mxGeometry x="440" y="30" width="200" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="config10" value="• RLS Policies" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="config">
+          <mxGeometry x="440" y="50" width="200" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="config11" value="• Migrations" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="config">
+          <mxGeometry x="440" y="70" width="200" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="config12" value="• Functions" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="config">
+          <mxGeometry x="440" y="90" width="200" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Title -->
+        <mxCell id="title" value="Garage 2024 - Architecture Technique" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=24;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="200" y="10" width="400" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Legend -->
+        <mxCell id="legend" value="Légende / Legend" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="40" y="420" width="660" height="80" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend1" value="Frontend: React/TypeScript + Vite + shadcn/ui" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="legend">
+          <mxGeometry y="30" width="300" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend2" value="Backend: Supabase (PostgreSQL + Auth + Functions)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="legend">
+          <mxGeometry y="50" width="300" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend3" value="Développeur: Thierry Gogo - Fullstack Developer Freelance" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="legend">
+          <mxGeometry y="70" width="400" height="20" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

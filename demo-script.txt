@@ -1,0 +1,249 @@
+# 🎬 Script Démonstration Vidéo - Garage 2024
+**Développeur** : Thierry Gogo (Fullstack Developer Freelance)
+**Durée** : 8-10 minutes
+**Format** : Tutoriel pas à pas
+
+---
+
+## 📋 **INTRODUCTION (0:00 - 0:30)**
+
+### 🎥 **Plan de la Vidéo**
+```
+[SCREEN] : Logo Garage 2024 avec animation
+[VOIX] : "Bienvenue dans cette démonstration de Garage 2024,
+         une application de gestion complète pour garages automobiles
+         développée par Thierry Gogo, Fullstack Developer Freelance."
+
+[SCREEN] : Splash Screen avec barre de chargement
+[VOIX] : "L'application démarre avec un écran de chargement élégant
+         et une animation fluide."
+```
+
+---
+
+## 🚀 **PREMIÈRE CONNEXION (0:30 - 2:00)**
+
+### 🎥 **Configuration Initiale**
+```
+[SCREEN] : BrainModal - Formulaire de configuration
+[VOIX] : "Lors de la première connexion, vous devez configurer votre garage."
+
+[ACTION] : Remplir le formulaire
+- Nom du garage : "Garage Excellence Abidjan"
+- Propriétaire : "Thierry Gogo"
+- Adresse : "123 Boulevard de la Paix, Abidjan"
+- Téléphone : "+225 07 58 96 61 56"
+- Email : "contact@garage-excellence.ci"
+
+[SCREEN] : Upload du logo
+[VOIX] : "Téléchargez votre logo au format PNG ou JPG,
+         taille maximale 2MB."
+
+[ACTION] : Valider la configuration
+[SCREEN] : Transition vers le Dashboard
+[VOIX] : "La configuration est sauvegardée et vous accédez au tableau de bord."
+```
+
+---
+
+## 📊 **DASHBOARD PRINCIPAL (2:00 - 3:30)**
+
+### 🎥 **Vue d'Ensemble**
+```
+[SCREEN] : Dashboard avec statistiques
+[VOIX] : "Le dashboard affiche les statistiques clés de votre garage."
+
+[POINTER] : Cartes statistiques
+- Interventions : 156
+- Clients actifs : 8
+- Véhicules : 12
+- Chiffre d'affaires : 8 250 000 FCFA
+
+[SCREEN] : Graphiques d'évolution
+[VOIX] : "Les graphiques montrent l'évolution de votre activité
+         sur les derniers mois."
+
+[ACTION] : Cliquer sur "Voir plus" pour accéder aux détails
+```
+
+---
+
+## 👥 **GESTION DES CLIENTS (3:30 - 5:00)**
+
+### 🎥 **Liste des Clients**
+```
+[SCREEN] : Page ClientsListe.tsx
+[VOIX] : "La gestion des clients est intuitive et complète."
+
+[POINTER] : Tableau des clients
+- Amany Kouassi (VIP)
+- Didier Traoré (Actif)
+- Aurelia Gogo (Nouveau)
+
+[ACTION] : Cliquer sur un client
+[SCREEN] : Détails du client
+[VOIX] : "Chaque client a son profil complet avec véhicules,
+         historique et coordonnées."
+
+[ACTION] : Ajouter un nouveau client
+[SCREEN] : Formulaire d'ajout
+[VOIX] : "L'ajout d'un client est simple avec validation automatique
+         du numéro de téléphone ivoirien."
+```
+
+---
+
+## 🔧 **GESTION DES RÉPARATIONS (5:00 - 6:30)**
+
+### 🎥 **Suivi des Interventions**
+```
+[SCREEN] : Page Reparations.tsx
+[VOIX] : "Le suivi des réparations est organisé par statut."
+
+[POINTER] : Filtres de statut
+- En attente : 2 réparations
+- En cours : 3 réparations
+- Terminé : 1 réparation
+
+[ACTION] : Cliquer sur une réparation
+[SCREEN] : Détails de la réparation
+[VOIX] : "Chaque réparation contient les détails techniques,
+         le coût en FCFA et le statut."
+
+[ACTION] : Modifier le statut
+[SCREEN] : Changement de statut
+[VOIX] : "Les statuts se mettent à jour en temps réel."
+```
+
+---
+
+## 📦 **GESTION DU STOCK (6:30 - 7:30)**
+
+### 🎥 **Inventaire**
+```
+[SCREEN] : Page Stock.tsx
+[VOIX] : "La gestion du stock est automatisée avec alertes."
+
+[POINTER] : Articles en stock
+- Filtres à huile : 45 unités
+- Plaquettes de frein : 12 unités
+- Batteries : 8 unités
+
+[SCREEN] : Seuils d'alerte
+[VOIX] : "Les seuils d'alerte vous préviennent quand il faut commander."
+
+[ACTION] : Ajouter un article
+[SCREEN] : Formulaire d'ajout
+[VOIX] : "L'ajout d'articles est rapide avec suggestions de fournisseurs."
+```
+
+---
+
+## ⚙️ **PARAMÈTRES ET CONFIGURATION (7:30 - 8:30)**
+
+### 🎥 **Personnalisation**
+```
+[SCREEN] : Page Settings.tsx
+[VOIX] : "Les paramètres permettent de personnaliser l'application."
+
+[ACTION] : Changer le thème
+[SCREEN] : Passage en mode sombre
+[VOIX] : "Le thème sombre est élégant et confortable pour les yeux."
+
+[ACTION] : Modifier la devise
+[SCREEN] : Sélection XOF (FCFA)
+[VOIX] : "La devise par défaut est le Franc CFA, adaptée au marché ivoirien."
+
+[ACTION] : Exporter les données
+[SCREEN] : Génération de rapport
+[VOIX] : "L'export des données est disponible pour vos comptabilités."
+```
+
+---
+
+## 🎯 **FONCTIONNALITÉS AVANCÉES (8:30 - 9:30)**
+
+### 🎥 **Raccourcis et Optimisations**
+```
+[SCREEN] : Utilisation des raccourcis clavier
+[VOIX] : "L'application propose des raccourcis clavier pour une utilisation rapide."
+
+[ACTION] : Ctrl + 1 (Dashboard)
+[ACTION] : Ctrl + 2 (Clients)
+[ACTION] : Ctrl + 3 (Réparations)
+[ACTION] : Ctrl + K (Recherche)
+
+[SCREEN] : Recherche globale
+[VOIX] : "La recherche globale permet de trouver rapidement
+         clients, véhicules ou réparations."
+
+[SCREEN] : Notifications
+[VOIX] : "Les notifications vous alertent des événements importants."
+```
+
+---
+
+## 🏁 **CONCLUSION (9:30 - 10:00)**
+
+### 🎥 **Résumé et Contact**
+```
+[SCREEN] : Vue d'ensemble de l'application
+[VOIX] : "Garage 2024 est une solution complète et moderne
+         pour la gestion de votre garage automobile."
+
+[SCREEN] : Informations de contact
+[VOIX] : "Pour plus d'informations ou une démonstration personnalisée,
+         contactez Thierry Gogo, Fullstack Developer Freelance."
+
+[SCREEN] : Coordonnées
+- Email : contact@garage-abidjan.com
+- Téléphone : +225 07 58 96 61 56
+- Stack : React/TypeScript + Supabase
+
+[SCREEN] : Logo final avec animation
+[VOIX] : "Merci d'avoir suivi cette démonstration de Garage 2024."
+```
+
+---
+
+## 📝 **NOTES TECHNIQUES POUR LE MONTAGE**
+
+### 🎬 **Transitions Suggérées**
+- **Fade in/out** entre les sections
+- **Zoom** sur les éléments importants
+- **Highlight** des boutons cliqués
+- **Sous-titres** en français et anglais
+
+### 🎵 **Musique de Fond**
+- **Style** : Professionnel, moderne
+- **Volume** : 20% en arrière-plan
+- **Durée** : 10 minutes
+
+### 🎨 **Graphismes**
+- **Logo** : Garage 2024 avec icône voiture
+- **Couleurs** : Palette orange-rouge du projet
+- **Police** : Inter ou Roboto
+- **Résolution** : 1920x1080 (Full HD)
+
+### 📱 **Multi-Plateforme**
+- **Desktop** : Démonstration principale
+- **Mobile** : Version responsive (optionnel)
+- **Tablet** : Adaptation automatique
+
+---
+
+## 🎯 **POINTS CLÉS À METTRE EN AVANT**
+
+1. **Simplicité d'utilisation** : Interface intuitive
+2. **Adaptation locale** : FCFA, noms ivoiriens, adresses Abidjan
+3. **Fonctionnalités complètes** : Clients, réparations, stock, finances
+4. **Performance** : Temps de chargement rapide
+5. **Sécurité** : Authentification et protection des données
+6. **Évolutivité** : Architecture modulaire
+7. **Support** : Développeur disponible et réactif
+
+---
+
+*Script généré le : Janvier 2024*
+*Version : 2.0.0 - FCFA Edition*
+*Durée estimée : 10 minutes*

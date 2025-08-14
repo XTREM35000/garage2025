@@ -1,0 +1,393 @@
+Structure du projet (exclusions : node_modules, dist, public, nhost, .vscode, .nuxt, .output, .git, .bolt, .next)
+========================================
+
+📄 .env.local
+📄 .gitignore
+📁 .vercel
+  📄 project.json
+  📄 README.txt
+📄 ACTION_PLAN.md
+📄 ARCHITECTURE.drawio
+📄 backup_pre_saas.dump
+📄 BRAIN_MODAL_ISSUES_PROMPT.md
+📄 BRAIN_MODAL_REFACTOR.md
+📄 BRAIN_SYSTEM.md
+📄 BUGFIXES_AND_IMPROVEMENTS.md
+📄 bun.lockb
+📄 check_rpc_function.sql
+📄 check_users_table.sql
+📄 cleanup_functions.sql
+📄 components.json
+📁 config
+  📄 initialCredentials.json
+📄 CORRECTIONS_SUMMARY.md
+📄 CORRECTION_GUIDE.md
+📄 CORRECTION_SUMMARY.md
+📄 CORRECTION_WORKFLOW_SEPARATED.md
+📄 CREATE_EMPLOYEES_TABLE.sql
+📄 create_organisation_function.sql
+📄 DATABASE_REFACTOR.md
+📄 demo-script.txt
+📄 demo_auth_fix.sql
+📄 deploy-edge-functions.sh
+📄 deploy-manual.md
+📄 deploy_migration_025.sql
+📄 DIAGNOSE_USERS_TABLE.md
+📄 diagnostic_functions.sql
+📁 docs
+  📄 AUTH_FIXES_DOCUMENTATION.md
+  📄 AUTH_PAGE_CLEANUP.md
+  📄 DATABASE_COLUMN_FIX.md
+  📄 DUAL_COLUMN_SOLUTION.md
+  📄 EDGE_FUNCTION_REFACTOR.md
+  📄 EXPORT_FIX_SUMMARY.md
+  📄 FINAL_ORGANIZATION_FIX.md
+  📄 fonctions.md
+  📄 gitinstructons.md
+  📄 instruction.md
+  📄 LAYOUT_IMPLEMENTATION.md
+  📄 LAYOUT_IMPROVEMENTS.md
+  📄 MIGRATION_FIX_GUIDE.md
+  📄 MULTI_INSTANCE_ARCHITECTURE.md
+  📄 MULTI_INSTANCE_FIX.md
+  📄 ORGANIZATION_LOGIC_FIX.md
+  📄 personnel-management-fix.md
+  📄 POLICY_CONFLICT_FIX.md
+  📄 QUICK_FIX_GUIDE.md
+  📄 QUICK_FIX_SUPER_ADMIN.md
+  📄 REFACTORISATION_COMPLETE.md
+  📄 RLS_RECURSION_FIX.md
+  📄 setup-env.md
+  📄 SINGLE_COLUMN_SIMPLIFICATION.md
+  📄 SUPER_ADMIN_CREATION_FIX.md
+  📄 SUPER_ADMIN_FIX.md
+  📄 TROUBLESHOOTING_MULTI_INSTANCE.md
+  📄 user-menu-avatar-fix.md
+  📄 USER_ORGANIZATIONS_COLUMN_FIX.md
+  📄 WORKFLOW_DEPLOYMENT_GUIDE.md
+  📄 WORKFLOW_INITIALISATION.md
+  📄 WORKFLOW_ROUTING_FIX.md
+📄 EMERGENCY_FIX.sql
+📄 env.d.ts
+📄 eslint.config.js
+📄 example_usage.ts
+📄 FILE_UPLOAD_GUIDE.md
+📄 fixed_rpc_function.sql
+📄 fix_organization_creation.sql
+📄 fix_rls_policies.sql
+📄 FIX_USERS_TABLE_COMPLETE.md
+📄 GARAGE_CONFIGURATION_IMPROVEMENTS.md
+📄 GETTING_STARTED.md
+📄 index.html
+📄 KEYBOARD_SHORTCUTS.md
+📄 liste.mjs
+📄 MIGRATION_GUIDE.md
+📄 NEW_WORKFLOW_GUIDE.md
+📄 ORGANIZATION_CREATION_FIX_GUIDE.md
+📄 package-lock.json
+📄 package.json
+📄 PHOTO_EVIDENCE_IMPLEMENTATION.md
+📄 postcss.config.js
+📄 project_structure.txt
+📄 project_structure_1.txt
+📄 project_structure_2.txt
+📄 project_structure_3.txt
+📄 project_structure_4.txt
+📄 project_structure_5.txt
+📄 quick_fix.sql
+📄 README.md
+📄 REFACTORISATION_FCFA.md
+📄 REFACTORISATION_STATUS.md
+📄 RLS_FIX_GUIDE.md
+📄 RLS_STORAGE_FIX.md
+📄 rollback-backup.txt
+📄 schema.dump
+📄 schema_a.sql
+📄 SCHEMA_FIX_GUIDE.md
+📄 simple_diagnostic.sql
+📄 simple_rpc_function.sql
+📄 SPACING_REDUCTION_SUMMARY.md
+📁 src
+  📁 api
+    📄 userSettings.ts
+  📄 App.css
+  📄 App.tsx
+  📁 assets
+    📁 images
+      📄 clients.webp
+      📄 dashboard.webp
+      📄 dashboard2.webp
+      📄 reparation.webp
+      📄 stock.webp
+      📄 vehicule.webp
+    📄 liste.mjs
+    📄 project_structure.txt
+  📁 components
+    📄 AdminApprovalNotice.tsx
+    📄 AdminCRUDModal.tsx
+    📄 AdminOnboardingModal.tsx
+    📄 AdvancedSettings.tsx
+    📄 AnimatedLogo.tsx
+    📁 Auth
+      📄 AuthForm.tsx
+      📄 LoginForm.tsx
+      📄 RegisterForm.tsx
+    📄 AuthGuard.tsx
+    📄 AuthModal.tsx
+    📄 AuthStatusDebug.tsx
+    📄 BrainModal.tsx
+    📄 BrandSetupWizard.tsx
+    📄 ChatWidget.tsx
+    📄 ClientDetailModal.tsx
+    📄 ClientForm.tsx
+    📄 CreateOrganisationForm.tsx
+    📄 Dashboard.tsx
+    📄 DashboardCard.tsx
+    📄 DatabaseDiagnostic.tsx
+    📄 DeleteAllModal.tsx
+    📁 enhanced-dashboard
+      📄 DashboardCard.tsx
+    📄 ErrorBoundary.tsx
+    📄 FileUploadTest.tsx
+    📄 Footer.tsx
+    📄 GarageInfo.tsx
+    📄 GarageSetupModal.tsx
+    📁 Header
+      📄 BackButton.tsx
+    📄 Header.tsx
+    📄 InitializationWizard.tsx
+    📄 InitialSetupWizard.tsx
+    📄 InteractiveFooter.tsx
+    📄 LazyModalWrapper.tsx
+    📄 MultiGarageAdminPanel.tsx
+    📄 NotificationCenter.tsx
+    📄 OrganisationOnboarding.tsx
+    📄 OrganizationSelect.tsx
+    📄 PageNavigation.tsx
+    📄 PhotoEvidenceModal.tsx
+    📄 PlanUpgrader.tsx
+    📄 PostAuthHandler.tsx
+    📄 PricingModal.tsx
+    📄 RepairForm.tsx
+    📄 ReparationDetailModal.tsx
+    📄 ReparationModal.tsx
+    📄 SimpleAuthGuard.tsx
+    📄 SimpleSetup.tsx
+    📄 SmsValidationModal.tsx
+    📄 SplashScreen.tsx
+    📄 StockDetailModal.tsx
+    📄 StockModal.tsx
+    📄 SuperAdminSetupModal.tsx
+    📄 ThirdPartyForm.tsx
+    📁 ui
+      📄 accordion.tsx
+      📄 alert-dialog.tsx
+      📄 alert.tsx
+      📄 aspect-ratio.tsx
+      📄 avatar.tsx
+      📄 badge.tsx
+      📄 breadcrumb-enhanced.tsx
+      📄 breadcrumb.tsx
+      📄 button.tsx
+      📄 calendar.tsx
+      📄 card.tsx
+      📄 carousel.tsx
+      📄 chart.tsx
+      📄 checkbox.tsx
+      📄 collapsible.tsx
+      📄 command.tsx
+      📄 context-menu.tsx
+      📄 dialog.tsx
+      📄 drawer.tsx
+      📄 dropdown-menu.tsx
+      📄 file-upload.tsx
+      📄 form.tsx
+      📄 hover-card.tsx
+      📄 input-otp.tsx
+      📄 input.tsx
+      📄 interactive-table.tsx
+      📄 label.tsx
+      📄 loading-enhanced.tsx
+      📄 loading-spinner.tsx
+      📄 menubar.tsx
+      📄 modal.tsx
+      📄 navigation-menu.tsx
+      📄 notification-enhanced.tsx
+      📄 page-transition.tsx
+      📄 pagination.tsx
+      📄 popover.tsx
+      📄 progress.tsx
+      📄 radio-group.tsx
+      📄 resizable.tsx
+      📄 scroll-area.tsx
+      📄 scrollable-content.tsx
+      📄 select.tsx
+      📄 separator.tsx
+      📄 sheet.tsx
+      📄 sidebar.tsx
+      📄 skeleton.tsx
+      📄 slider.tsx
+      📄 sonner.tsx
+      📄 switch.tsx
+      📄 table.tsx
+      📄 tabs.tsx
+      📄 textarea.tsx
+      📄 toast-enhanced.tsx
+      📄 toast.tsx
+      📄 toaster.tsx
+      📄 toggle-group.tsx
+      📄 toggle.tsx
+      📄 tooltip.tsx
+      📄 use-toast.ts
+    📄 UnifiedFooter.tsx
+    📄 UnifiedHeader.module.css
+    📄 UnifiedHeader.tsx
+    📄 UserMenu.tsx
+    📄 UserMenuDebug.tsx
+    📄 VehicleDetailModal.tsx
+    📄 VehicleForm.tsx
+    📄 WorkflowGuard.tsx
+  📁 contexts
+    📄 ThemeContext.tsx
+  📁 hooks
+    📄 use-mobile.tsx
+    📄 use-toast.ts
+    📄 useAuth.ts
+    📄 useBrainSetup.ts
+    📄 useBrandCheck.ts
+    📄 useNavigationHistory.ts
+    📄 useNotifications.ts
+    📄 useOrganization.ts
+    📄 useOrganizationQuota.ts
+    📄 usePhotoEvidence.ts
+    📄 useSimpleAuth.ts
+    📄 useThirdPartyAuth.ts
+    📄 useWorkflowCheck.ts
+  📄 index.css
+  📁 integrations
+    📁 supabase
+      📄 client.ts
+      📄 demoService.ts
+      📄 fileService.ts
+      📄 initialize.ts
+      📄 types.ts
+  📁 layout
+    📄 AppLayout.tsx
+    📄 AuthenticatedLayout - Copie.tsx
+    📄 AuthenticatedLayout.tsx
+    📄 UnifiedLayout.tsx
+  📁 lib
+    📁 api
+      📄 organisation.ts
+    📄 config.ts
+    📄 utils.ts
+  📄 main.tsx
+  📁 pages
+    📄 Aide.tsx
+    📄 APropos.tsx
+    📄 Auth.tsx
+    📄 AuthPage.tsx
+    📄 ClientsAjouter.tsx
+    📄 ClientsHistorique.tsx
+    📄 ClientsListe.tsx
+    📄 Connexion.tsx
+    📄 Dashboard.tsx
+    📄 Index.tsx
+    📄 NotFound.tsx
+    📄 OrganisationOnboarding.tsx
+    📁 personnel
+      📄 ModalForm.tsx
+    📄 Personnel.tsx
+    📄 Profil.tsx
+    📁 reparations
+      📄 CreateForm.tsx
+    📄 Reparations.tsx
+    📄 Settings.tsx
+    📄 Stock.tsx
+    📄 ThirdPartyDemo.tsx
+    📄 Vehicules.tsx
+  📁 routes
+    📄 AuthRedirect.tsx
+    📄 PrivateRoute.tsx
+  📁 types
+    📄 clients.ts
+    📄 notifications.ts
+    📄 reparations.ts
+    📄 stock.ts
+    📄 users.ts
+    📄 vehicles.ts
+  📁 utils
+    📄 photoEvidence.ts
+    📄 sessionCleaner.ts
+  📄 vite-env.d.ts
+📄 STATUS_SUPER_ADMIN_FIX.md
+📁 supabase
+  📄 config.toml
+  📄 edge-function-config.md
+  📁 functions
+    📁 clear-demo-data
+      📄 index.ts
+    📁 create-admin
+      📄 index.ts
+    📁 create-organisation
+      📄 index.ts
+    📁 generate-report
+      📄 index.ts
+    📁 inject-demo-data
+      📄 index.ts
+    📁 multi-tenant-context
+      📄 index.ts
+    📁 notify-stock-alert
+      📄 index.ts
+    📁 set-organisation-context
+      📄 index.ts
+    📁 setup-super-admin
+      📄 index.ts
+  📁 migrations
+    📄 001_initial_schema.sql
+    📄 001_initial_schema_fixed.sql
+    📄 002_rls_policies.sql
+    📄 002_rls_policies_fixed.sql
+    📄 003_notifications.sql
+    📄 003_notifications_fixed.sql
+    📄 004_complete_schema.sql
+    📄 005_rls_policies.sql
+    📄 006_fix_schema_issues.sql
+    📄 007_add_missing_columns.sql
+    📄 008_diagnostic_schema.sql
+    📄 009_fixed_schema_order.sql
+    📄 010_simple_schema.sql
+    📄 011_storage_setup.sql
+    📄 012_storage_rls_policies.sql
+    📄 013_ensure_storage_buckets.sql
+    📄 014_multi_instance_setup.sql
+    📄 015_fix_super_admins_table.sql
+    📄 016_fix_super_admin_creation.sql
+    📄 017_fix_super_admins_structure.sql
+    📄 018_simple_super_admin_fix.sql
+    📄 019_fix_rls_recursion.sql
+    📄 020_fix_super_admins_schema_cache.sql
+    📄 021_add_validate_org_access_function.sql
+    📄 022_create_user_organizations_table.sql
+    📄 023_add_demo_organizations.sql
+    📄 024_fix_organizations_policies.sql
+    📄 025_fix_organization_creation.sql
+📄 SUPABASE_ERRORS_FIX.md
+📄 SUPABASE_SETUP.md
+📄 SUPER_ADMIN_SETUP_FIX.md
+📄 tailwind.config.ts
+📄 test_export.md
+📄 test_fix.md
+📄 TEST_NEW_WORKFLOW.md
+📄 test_organization_creation.sql
+📄 test_organization_creation.ts
+📄 tsconfig.app.json
+📄 tsconfig.json
+📄 tsconfig.node.json
+📄 UI_IMPROVEMENTS.md
+📄 UNIFIED_DESIGN.md
+📄 updated_initialization_wizard.tsx
+📄 UPDATE_USERS_SCHEMA.sql
+📄 update_users_table.sql
+📄 UPLOAD_DEBUG_GUIDE.md
+📄 vite.config.ts

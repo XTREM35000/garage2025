@@ -1,0 +1,170 @@
+Structure du projet (exclusions : node_modules, dist, public, nhost, .vscode, .nuxt, .output, .git, .bolt, .next)
+========================================
+
+📄 .env.example
+📄 .gitignore
+📄 BRAIN_MODAL_ISSUES_PROMPT.md
+📄 BRAIN_MODAL_REFACTOR.md
+📄 BRAIN_SYSTEM.md
+📄 BUGFIXES_AND_IMPROVEMENTS.md
+📄 bun.lockb
+📄 components.json
+📁 docs
+  📄 instruction.md
+📄 eslint.config.js
+📄 GARAGE_CONFIGURATION_IMPROVEMENTS.md
+📄 index.html
+📄 liste.mjs
+📄 package-lock.json
+📄 package.json
+📄 postcss.config.js
+📄 project_structure.txt
+📄 project_structure_1.txt
+📄 project_structure_2.txt
+📄 README.md
+📄 REFACTORISATION_FCFA.md
+📄 REFACTORISATION_STATUS.md
+📁 src
+  📄 App.css
+  📄 App.tsx
+  📁 components
+    📄 AdvancedSettings.tsx
+    📄 AnimatedHeader.tsx
+    📁 Auth
+      📄 AuthForm.tsx
+      📄 LoginForm.tsx
+      📄 RegisterForm.tsx
+    📄 BrainModal.tsx
+    📄 ChatWidget.tsx
+    📄 Dashboard.tsx
+    📄 DashboardCard.tsx
+    📄 DeleteAllModal.tsx
+    📄 Footer.tsx
+    📄 GarageInfo.tsx
+    📄 GarageSetupModal.tsx
+    📄 GlobalLayout.tsx
+    📄 Header.tsx
+    📄 InteractiveFooter.tsx
+    📄 MainLayout.tsx
+    📄 Navbar.tsx
+    📄 SplashScreen.tsx
+    📁 ui
+      📄 accordion.tsx
+      📄 alert-dialog.tsx
+      📄 alert.tsx
+      📄 aspect-ratio.tsx
+      📄 avatar.tsx
+      📄 badge.tsx
+      📄 breadcrumb.tsx
+      📄 button.tsx
+      📄 calendar.tsx
+      📄 card.tsx
+      📄 carousel.tsx
+      📄 chart.tsx
+      📄 checkbox.tsx
+      📄 collapsible.tsx
+      📄 command.tsx
+      📄 context-menu.tsx
+      📄 dialog.tsx
+      📄 drawer.tsx
+      📄 dropdown-menu.tsx
+      📄 form.tsx
+      📄 hover-card.tsx
+      📄 input-otp.tsx
+      📄 input.tsx
+      📄 interactive-table.tsx
+      📄 label.tsx
+      📄 loading-spinner.tsx
+      📄 menubar.tsx
+      📄 modal.tsx
+      📄 navigation-menu.tsx
+      📄 pagination.tsx
+      📄 popover.tsx
+      📄 progress.tsx
+      📄 radio-group.tsx
+      📄 resizable.tsx
+      📄 scroll-area.tsx
+      📄 select.tsx
+      📄 separator.tsx
+      📄 sheet.tsx
+      📄 sidebar.tsx
+      📄 skeleton.tsx
+      📄 slider.tsx
+      📄 sonner.tsx
+      📄 switch.tsx
+      📄 table.tsx
+      📄 tabs.tsx
+      📄 textarea.tsx
+      📄 toast.tsx
+      📄 toaster.tsx
+      📄 toggle-group.tsx
+      📄 toggle.tsx
+      📄 tooltip.tsx
+      📄 use-toast.ts
+    📄 UnifiedFooter.tsx
+    📄 UnifiedHeader.tsx
+    📄 UserMenu.tsx
+  📁 contexts
+    📄 ThemeContext.tsx
+  📁 hooks
+    📄 use-mobile.tsx
+    📄 use-toast.ts
+    📄 useBrainSetup.ts
+  📄 index.css
+  📁 integrations
+    📁 supabase
+      📄 client.ts
+      📄 services.ts
+      📄 types.ts
+  📁 layout
+    📄 AppLayout.tsx
+    📄 UnifiedLayout.tsx
+  📁 lib
+    📄 config.ts
+    📄 utils.ts
+  📄 main.tsx
+  📁 pages
+    📄 Aide.tsx
+    📄 APropos.tsx
+    📄 Auth.tsx
+    📄 ClientsAjouter.tsx
+    📄 ClientsHistorique.tsx
+    📄 ClientsListe.tsx
+    📄 Connexion.tsx
+    📄 Dashboard.tsx
+    📄 Index.tsx
+    📄 NotFound.tsx
+    📄 Profil.tsx
+    📄 Reparations.tsx
+    📄 Settings.tsx
+    📄 Stock.tsx
+    📄 Vehicules.tsx
+  📁 routes
+    📄 AuthRedirect.tsx
+    📄 PrivateRoute.tsx
+  📄 vite-env.d.ts
+📁 supabase
+  📄 config.toml
+  📁 functions
+    📁 create-admin
+      📄 index.ts
+    📁 generate-report
+      📄 index.ts
+    📁 notify-stock-alert
+      📄 index.ts
+  📁 migrations
+    📄 001_initial_schema.sql
+    📄 001_initial_schema_fixed.sql
+    📄 002_rls_policies.sql
+    📄 002_rls_policies_fixed.sql
+    📄 003_notifications.sql
+    📄 003_notifications_fixed.sql
+📄 SUPABASE_ERRORS_FIX.md
+📄 SUPABASE_SETUP.md
+📄 tailwind.config.ts
+📄 tsconfig.app.json
+📄 tsconfig.json
+📄 tsconfig.node.json
+📄 UI_IMPROVEMENTS.md
+📄 UNIFIED_DESIGN.md
+📄 vite.config.ts

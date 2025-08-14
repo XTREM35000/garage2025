@@ -1,0 +1,9 @@
+-- Annulation des renommages
+ALTER TABLE tenants RENAME TO organisations;
+ALTER TABLE employees RENAME COLUMN tenant_id TO organisation_id;
+ALTER TABLE customers RENAME COLUMN tenant_id TO organisation_id;
+
+-- Suppression des colonnes ajoutées
+ALTER TABLE organisations DROP COLUMN IF EXISTS parent_id;
+ALTER TABLE organisations DROP COLUMN IF EXISTS is_tenant;
+ALTER TABLE organisations RENAME COLUMN tenant_code TO code;

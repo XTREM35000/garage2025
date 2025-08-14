@@ -1,0 +1,252 @@
+/*
+  CV Styles - Yacinthe GOGO
+  Palette : Noir (#000), Bleu (#2E5A88), Blanc
+  Responsive, Flexbox, Tabler Icons
+*/
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Montserrat', Arial, sans-serif;
+  background: #f7f9fb;
+  color: #222;
+}
+
+.cv-container {
+  display: flex;
+  max-width: 1000px;
+  margin: 40px auto;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(46, 90, 136, 0.08);
+  overflow: hidden;
+  min-height: 600px;
+}
+
+.cv-sidebar {
+  width: 30%;
+  background: #2E5A88;
+  color: #fff;
+  padding: 32px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-right: 2px solid #333;
+}
+
+.cv-photo {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 4px solid #eee;
+  margin-bottom: 32px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  max-width: 100%;
+  max-height: 150px;
+}
+
+.cv-section {
+  margin-bottom: 32px;
+}
+
+.cv-section h2 {
+  font-size: 1.1rem;
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+  color: #fff;
+  border-bottom: 1px solid #fff2;
+  padding-bottom: 4px;
+  text-transform: uppercase;
+}
+
+.cv-contact-list,
+.cv-interests-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.cv-contact-list li,
+.cv-interests-list li {
+  margin-bottom: 8px;
+  font-size: 0.98rem;
+  display: flex;
+  align-items: center;
+}
+
+.cv-contact-list i {
+  margin-right: 8px;
+  font-size: 1.1em;
+}
+
+.cv-main {
+  width: 70%;
+  padding: 40px 40px 32px 40px;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+}
+
+.cv-header h1 {
+  font-family: 'Montserrat', Arial, sans-serif;
+  font-size: 2.3rem;
+  font-weight: bold;
+  color: #2E5A88;
+  margin: 0 0 8px 0;
+}
+
+.cv-header h2 {
+  font-size: 1.1rem;
+  color: #000;
+  margin: 0 0 24px 0;
+  font-weight: 500;
+}
+
+.cv-experiences-list {
+  list-style: disc inside;
+  margin: 0 0 0 16px;
+  padding: 0;
+}
+
+.cv-experiences-list>li {
+  margin-bottom: 18px;
+}
+
+.cv-experiences-list ul {
+  list-style: circle inside;
+  margin: 4px 0 0 18px;
+  padding: 0;
+}
+
+.cv-date {
+  float: right;
+  font-size: 0.95em;
+  color: #2E5A88;
+  font-weight: 500;
+}
+
+.cv-education-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cv-education-item {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-end;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 4px;
+}
+
+.cv-edu-title {
+  font-weight: 600;
+  color: #2E5A88;
+}
+
+.cv-edu-school {
+  font-size: 0.98em;
+  color: #333;
+}
+
+.cv-edu-date {
+  font-size: 0.95em;
+  color: #2E5A88;
+  font-weight: 500;
+}
+
+.cv-skills-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+}
+
+.cv-skills-table td {
+  border: 1px solid #2E5A88;
+  padding: 8px 12px;
+  font-size: 0.98em;
+  color: #222;
+  background: #f7f9fb;
+}
+
+.cv-languages {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.cv-language {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cv-lang-bar {
+  flex: 1;
+  height: 10px;
+  background: #eee;
+  border-radius: 6px;
+  overflow: hidden;
+  margin: 0 8px;
+}
+
+.cv-lang-bar-fill {
+  height: 100%;
+  background: #2E5A88;
+  border-radius: 6px;
+}
+
+.cv-lang-level {
+  font-size: 0.95em;
+  color: #2E5A88;
+}
+
+@media (max-width: 900px) {
+  .cv-container {
+    flex-direction: column;
+    max-width: 98vw;
+    min-height: unset;
+  }
+
+  .cv-sidebar,
+  .cv-main {
+    width: 100%;
+    border-right: none;
+    border-bottom: 2px solid #333;
+    padding: 24px 16px;
+  }
+
+  .cv-main {
+    padding: 24px 16px 16px 16px;
+  }
+}
+
+@media (max-width: 600px) {
+  .cv-header h1 {
+    font-size: 1.3rem;
+  }
+
+  .cv-header h2 {
+    font-size: 0.98rem;
+  }
+
+  .cv-photo {
+    width: 80px;
+    height: 80px;
+    margin-bottom: 18px;
+  }
+}
+
+/* Ajoutez dans votre fichier global CSS */
+@keyframes spin-slow {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 6s linear infinite;
+}

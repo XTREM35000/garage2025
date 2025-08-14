@@ -1,0 +1,382 @@
+/* Header wrapper */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  width: 100%;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  background: transparent;
+  /* Laisser le gradient appliqué via Tailwind sur l'élément */
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.dark {}
+
+.light {}
+
+.inner {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 8px 16px;
+  min-height: 72px;
+  /* Hauteur visuelle du header */
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 12px;
+}
+
+.leftSection {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.iconButton {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: transparent;
+  /* Pas de pastille opaque */
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+  transition: transform .2s ease, background .2s ease, color .2s ease, border-color .2s ease;
+}
+
+.dark .iconButton {
+  color: #ffffff;
+}
+
+.iconButton:hover {
+  transform: scale(1.05);
+  border-color: rgba(255, 255, 255, 0.45);
+}
+
+.iconButton:focus-visible {
+  outline: 2px solid #22c55e;
+  outline-offset: 2px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brandMark {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: transparent;
+  /* remplacé par AnimatedLogo */
+  box-shadow: none;
+}
+
+.brandText {
+  display: flex;
+  flex-direction: column;
+}
+
+.brandTitle {
+  font-weight: 800;
+  font-size: 1.1rem;
+}
+
+.brandSubtitle {
+  font-size: 0.75rem;
+}
+
+.nav {
+  justify-self: center;
+}
+
+.navList {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.navItemWrapper {
+  position: relative;
+}
+
+.navItem {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  transition: transform .2s ease, color .2s ease, background .2s ease;
+}
+
+.navItem:hover {
+  transform: scale(1.05);
+}
+
+.navItem:focus-visible {
+  outline: 2px solid #22c55e;
+  outline-offset: 3px;
+}
+
+.navIcon {
+  width: 18px;
+  height: 18px;
+  opacity: 0.95;
+  color: #ffffff;
+}
+
+.navLabel {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #f1eaea;
+}
+
+.activeUnderline {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 0px;
+  height: 2px;
+  background: linear-gradient(90deg, #86efac, #22c55e);
+  border-radius: 2px;
+}
+
+.navDropdown {
+  position: relative;
+}
+
+.dropdownMenu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 220px;
+  background: rgba(18, 140, 126, 0.96);
+  /* WhatsApp vert profond */
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 12px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.18);
+  padding: 8px;
+}
+
+.dark .dropdownMenu {
+  background: rgba(18, 140, 126, 0.96);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.dropdownItem {
+  display: block;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: #ffffff;
+}
+
+.dropdownItem:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.activeDropdown {
+  color: #86efac;
+}
+
+.navError {
+  margin-left: 10px;
+  color: #ef4444;
+  font-size: 0.85rem;
+}
+
+.rightSection {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.badgeWrapper {
+  position: relative;
+}
+
+.badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: #ef4444;
+  color: white;
+  border-radius: 10px;
+  min-width: 18px;
+  height: 18px;
+  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  box-shadow: 0 8px 16px rgba(239, 68, 68, .4);
+}
+
+.skeletonBtn {
+  opacity: 0.85;
+}
+
+.skeletonBtn:focus-visible {
+  outline: 2px solid #22c55e;
+  outline-offset: 2px;
+}
+
+/* FAB */
+.fab {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(18, 140, 126, 0.9);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 24px 40px rgba(0, 0, 0, 0.25);
+  transition: box-shadow .2s ease;
+}
+
+.dark .fab {
+  background: rgba(18, 140, 126, 0.9);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.fabVisible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.fabHidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.fab:focus-visible {
+  outline: 2px solid #22c55e;
+  outline-offset: 3px;
+}
+
+/* Mobile menu sheet */
+.mobileSheet {
+  position: fixed;
+  top: 64px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(92%, 520px);
+  background: rgba(7, 94, 84, 0.98);
+  /* WhatsApp deep */
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 20px 44px rgba(0, 0, 0, 0.25);
+  border-radius: 16px;
+  padding: 12px;
+  z-index: 45;
+  color: #ffffff;
+}
+
+.dark .mobileSheet {
+  background: rgba(7, 94, 84, 0.98);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+.mobileList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mobileItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 12px;
+  color: #ffffff;
+}
+
+.mobileItem:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.mobileGroup {
+  padding: 6px 0;
+}
+
+.mobileGroupTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 6px;
+  opacity: .95;
+  color: #ffffff;
+}
+
+.mobileSubList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-left: 32px;
+}
+
+.mobileSubItem {
+  padding: 10px;
+  border-radius: 10px;
+  color: #ffffff;
+}
+
+.mobileSubItem:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* Ripple effect */
+.ripple {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: rgba(134, 239, 172, .5);
+  border-radius: 9999px;
+  transform: translate(-50%, -50%);
+  animation: ripple .6s ease-out forwards;
+  pointer-events: none;
+}
+
+@keyframes ripple {
+  from {
+    opacity: .6;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(12);
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .inner {
+    grid-template-columns: 1fr auto auto;
+  }
+
+  .nav {
+    display: none;
+  }
+}
