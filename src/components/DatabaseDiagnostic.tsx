@@ -48,12 +48,12 @@ const DatabaseDiagnostic: React.FC = () => {
 
       // Vérifier les utilisateurs
       const { count: userCount, error: userError } = await supabase
-        .from('users')
+.from('profiles')
         .select('*', { count: 'exact', head: true });
 
       // Vérifier les admins
       const { count: adminCount, error: adminError } = await supabase
-        .from('users')
+        .from('profiles')
         .select('*', { count: 'exact', head: true })
         .eq('role', 'admin');
 

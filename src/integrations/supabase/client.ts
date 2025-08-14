@@ -15,3 +15,41 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     autoRefreshToken: true,
   }
 });
+
+// Additional functions for compatibility
+export const validateSession = async () => {
+  return await supabase.auth.getSession();
+};
+
+export const clearSession = async () => {
+  return await supabase.auth.signOut();
+};
+
+export const createOrganizationWithAdmin = async (orgData: {
+  name: string;
+  adminEmail: string;
+  adminName?: string;
+  plan?: string;
+}) => {
+  const { data, error } = await supabase.rpc('create_organisation_with_admin', {
+    org_data: {
+      name: orgData.name,
+      code: `ORG-${Math.random().toString(36).substr(2, 8).toUpperCase()}`,
+      slug: orgData.name.toLowerCase().replace(/\s+/g, '-'),
+      email: orgData.adminEmail,
+      subscription_type: orgData.plan || 'free'
+    },
+    admin_email: orgData.adminEmail
+  });
+  
+  return { data, error };
+};
+
+export const getAvailableOrganizations = async () => {
+  return await supabase.from('organisations').select('*');
+};
+
+export type CreateOrganizationResponse = {
+  data: any;
+  error: any;
+};

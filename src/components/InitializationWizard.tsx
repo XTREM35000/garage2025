@@ -123,14 +123,12 @@ const InitializationWizard: React.FC<InitializationWizardProps> = ({
         .upsert({
           id: authData.user.id,
           email: adminData.email,
+          user_id: authData.user.id,
           full_name: adminData.name,
-          first_name: adminData.name.split(' ')[0],
-          last_name: adminData.name.split(' ').slice(1).join(' '),
           phone: adminData.phone,
           avatar_url: avatarUrl,
-          is_active: true,
-          role: 'admin',
-          last_sign_in_at: new Date().toISOString()
+          actif: true,
+          role: 'admin'
         });
 
       if (profileError) throw profileError;
@@ -171,22 +169,22 @@ const InitializationWizard: React.FC<InitializationWizardProps> = ({
 
       console.log('✅ Réponse création organisation:', result);
 
-      if (!result?.success || !result.organization) {
-        throw new Error(result?.error || 'Réponse invalide du serveur');
+      if (result.error) {
+        throw new Error(result.error.message || 'Erreur création organisation');
       }
 
       // Lier l'utilisateur admin à l'organisation dans public.users
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (user?.id) {
-          const { error: linkError } = await supabase.rpc('upsert_user_and_profile', {
-            p_id: user.id,
-            p_email: adminData.email,
-            p_full_name: adminData.name,
-            p_phone: adminData.phone,
-            p_role: 'admin',
-            p_org: result.organization.id,
-            p_avatar: null
+          const { error: linkError } = await supabase.rpc('upsert_user_profile', {
+            user_id: user.id,
+            user_email: adminData.email,
+            full_name: adminData.name,
+            phone: adminData.phone,
+            user_role: 'admin',
+            organization_id: result.data?.id,
+            avatar_url: null
           });
           if (linkError) {
             console.warn('⚠️ Erreur liaison organisation_id sur users:', linkError);
@@ -199,7 +197,7 @@ const InitializationWizard: React.FC<InitializationWizardProps> = ({
       // Mettre à jour les données avec le code généré (valeur par défaut si absent)
       setOrganizationData(prev => ({
         ...prev,
-        code: result.organization.code ?? 'N/A'
+        code: result.data?.code ?? 'N/A'
       }));
 
       toast.success('Organisation créée avec succès!');

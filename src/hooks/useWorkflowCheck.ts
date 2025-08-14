@@ -20,7 +20,7 @@ export const useWorkflowCheck = () => {
 
         // Vérifier l'organisation
         const { data: organization, error: orgError } = await supabase
-          .from('organizations')
+          .from('organisations')
           .select('*')
           .maybeSingle();
 
@@ -28,7 +28,7 @@ export const useWorkflowCheck = () => {
 
         // Vérifier le rôle de l'utilisateur
         const { data: userProfile, error: userError } = await supabase
-          .from('users')
+          .from('profiles')
           .select('role')
           .eq('id', user.id)
           .single();
