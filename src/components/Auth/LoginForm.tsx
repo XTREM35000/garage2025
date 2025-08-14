@@ -3,7 +3,7 @@ import { Alert } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label} from '@/components/ui/label';
-import { signInWithEmail, resendConfirmation } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { useSimpleAuth } from '@/hooks/useSimpleAuth';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -27,15 +27,18 @@ const LoginForm = () => {
     setShowResendLink(false);
 
     try {
-      const { user, session, error } = await signInWithEmail(email, password);
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
       if (error) {
-        if (error.includes('Email non confirmé')) {
+        if (error.message.includes('Email not confirmed')) {
           setShowResendLink(true);
         }
-        setError(error);
+        setError(error.message);
         return;
       }
-      if (session) {
+      if (data.session) {
         navigate('/dashboard');
       }
     } catch (err: unknown) {
@@ -58,13 +61,16 @@ const LoginForm = () => {
   const handleResendConfirmation = async () => {
     try {
       setLoading(true);
-      const { error } = await resendConfirmation(email);
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: email
+      });
       if (!error) {
         setError('');
         setShowResendLink(false);
         alert('Email de confirmation renvoyé !');
       } else {
-        setError(error);
+        setError(error.message);
       }
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur lors du renvoi';

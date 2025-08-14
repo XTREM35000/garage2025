@@ -8,7 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   User, Mail, Phone, Shield, AlertCircle, Eye, EyeOff, Crown, Lock, Sparkles
 } from 'lucide-react';
-import { supabase, signUpWithEmail } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 interface SuperAdminSetupModalProps {
@@ -89,124 +89,36 @@ const SuperAdminSetupModal: React.FC<SuperAdminSetupModalProps> = ({ isOpen, onC
     try {
       console.log('🚀 Début création Super-Admin:', formData.email);
 
-      // 1. Créer l'utilisateur avec Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          data: {
-            full_name: `${formData.prenom} ${formData.nom}`,
-            phone: formData.phone,
-            role: 'superadmin'
-          }
-        }
+      // Utiliser l'Edge Function pour créer le super admin (contourne RLS)
+      const response = await fetch(`https://metssugfqsnttghfrsxx.supabase.co/functions/v1/setup-super-admin`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ldHNzdWdmcXNudHRnaGZyc3h4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI4NDk5NjEsImV4cCI6MjA2ODQyNTk2MX0.Vc0yDgzSe6iAfgUHezVKQMm4qvzMRRjCIrTTndpE1k8`,
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+          phone: formData.phone,
+          nom: formData.nom,
+          prenom: formData.prenom
+        })
       });
 
-      if (authError) {
-        console.error('❌ Erreur auth signup:', authError);
-        throw new Error(authError.message);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Erreur lors de la création du Super-Admin');
       }
 
-      if (!authData.user) {
-        throw new Error('Erreur lors de la création de l\'utilisateur');
-      }
-
-      console.log('✅ Utilisateur créé:', authData.user.id);
-
-      // 2. Insérer dans la table super_admins (RLS corrigé)
-      let { data: profileData, error: profileError } = await supabase
-        .from('super_admins')
-        .insert({
-          user_id: authData.user.id,
-          email: formData.email,
-          nom: formData.nom,
-          prenom: formData.prenom,
-          phone: formData.phone,
-          est_actif: true
-        })
-        .select()
-        .single();
-
-      if (profileError) {
-        console.error('❌ Erreur insertion super_admins:', profileError);
-
-        // Si l'utilisateur existe déjà, essayer de le connecter
-        if (profileError.message.includes('duplicate key') || profileError.message.includes('already exists')) {
-          console.log('🔄 Tentative de connexion utilisateur existant...');
-
-          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-            email: formData.email,
-            password: formData.password
-          });
-
-          if (signInError) {
-            throw new Error('Utilisateur existant mais mot de passe incorrect');
-          }
-
-          // Vérifier si déjà super-admin
-          const { data: existingAdmin } = await supabase
-            .from('super_admins')
-            .select('*')
-            .eq('user_id', signInData.user.id)
-            .single();
-
-          if (existingAdmin) {
-            throw new Error('Cet utilisateur est déjà Super-Admin');
-          }
-
-          // Créer le profil super-admin
-          const { data: newProfileData, error: newProfileError } = await supabase
-            .from('super_admins')
-            .insert({
-              user_id: signInData.user.id,
-              email: formData.email,
-              nom: formData.nom,
-              prenom: formData.prenom,
-              phone: formData.phone,
-              est_actif: true
-            })
-            .select()
-            .single();
-
-          if (newProfileError) {
-            throw new Error(`Erreur création profil: ${newProfileError.message}`);
-          }
-
-          profileData = newProfileData;
-        } else {
-          throw new Error(`Erreur insertion: ${profileError.message}`);
-        }
-      }
-
-      console.log('✅ Profil Super-Admin créé:', profileData);
-
-      // 3. Créer la relation avec une organisation (si elle existe)
-      const { data: orgs } = await supabase
-        .from('organisations')
-        .select('id')
-        .limit(1);
-
-      if (orgs && orgs.length > 0) {
-        const { error: userOrgError } = await supabase
-          .from('user_organizations')
-          .insert({
-            user_id: authData.user.id,
-            organization_id: orgs[0].id,
-            role: 'superadmin'
-          });
-
-        if (userOrgError) {
-          console.warn('⚠️ Erreur création relation user_organizations:', userOrgError);
-          // Ne pas échouer pour cette erreur
-        }
-      }
+      const result = await response.json();
+      console.log('✅ Super-Admin créé via Edge Function:', result);
 
       // 4. Succès
       toast.success('Super-Admin créé avec succès !');
 
       onComplete({
-        user: authData.user,
-        profile: profileData
+        user: result.user,
+        profile: result.profile
       });
 
     } catch (error: any) {

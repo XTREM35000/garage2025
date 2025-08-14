@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Mail, Lock, User, Camera, Eye, EyeOff } from 'lucide-react';
-import { signUpWithEmail } from '@/integrations/supabase/client';
+// Removed unused import
 import { toast } from 'sonner';
 import { FileService } from '@/integrations/supabase/fileService';
 import { supabase } from '@/integrations/supabase/client';
