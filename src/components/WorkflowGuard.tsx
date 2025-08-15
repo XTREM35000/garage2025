@@ -25,18 +25,18 @@ const WorkflowGuard: React.FC<WorkflowGuardProps> = ({ children }) => {
 
   const checkWorkflowState = async () => {
     try {
-      // 0. Vérification Super Admin (première priorité)
+      // 0. Vérification Super Admin (première priorité absolue)
       const { count } = await supabase.from('super_admins').select('*', { count: 'exact' });
       if (count === 0) {
         console.log('❌ Aucun Super Admin, démarrage super-admin');
         setWorkflowState('needs-init');
         setInitStep('super-admin');
         setLoading(false);
-        return;
+        return; // STOP ICI - pas de vérification auth nécessaire
       }
       console.log('✅ Super Admin trouvé');
 
-      // 1. Vérification de l'authentification
+      // 1. Vérification de l'authentification (seulement après avoir un super admin)
       const { data: { user } } = await supabase.auth.getUser();
 
       if (!user) {
@@ -150,6 +150,12 @@ const WorkflowGuard: React.FC<WorkflowGuardProps> = ({ children }) => {
   const handleInitComplete = () => {
     console.log('✅ Initialisation terminée - Vérification finale');
     toast.success('Configuration terminée avec succès !');
+
+    // Si on vient de créer un super admin, redirection vers auth
+    if (initStep === 'super-admin') {
+      setWorkflowState('needs-auth');
+      return;
+    }
 
     // Marquer comme prêt et laisser le guard faire une nouvelle vérification
     setWorkflowState('ready');
