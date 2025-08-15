@@ -110,10 +110,13 @@ const InitializationWizard: React.FC<InitializationWizardProps> = ({
   const handleAdminSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    
+    console.log('🚀 Début création admin/super-admin, mode:', mode, 'currentStep:', currentStep);
 
     try {
       // Traitement spécial pour Super Admin
-      if (mode === 'super-admin') {
+      if (mode === 'super-admin' || currentStep === 'super-admin') {
+        console.log('🦸‍♂️ Mode Super Admin détecté, création en cours...');
         const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email: adminData.email,
           password: adminData.password,
