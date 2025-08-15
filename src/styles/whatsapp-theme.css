@@ -1,0 +1,224 @@
+/* Charte Graphique WhatsApp Vert - Garage 2025 */
+
+:root {
+  /* Couleurs principales WhatsApp */
+  --whatsapp-primary: #128C7E;
+  --whatsapp-primary-dark: #075E54;
+  --whatsapp-primary-light: #25D366;
+  --whatsapp-secondary: #34B7F1;
+  --whatsapp-accent: #F7F7F7;
+  
+  /* Couleurs de texte */
+  --text-primary: #1C1E21;
+  --text-secondary: #65676B;
+  --text-muted: #8E8E93;
+  
+  /* Couleurs de fond */
+  --bg-primary: #FFFFFF;
+  --bg-secondary: #F0F2F5;
+  --bg-tertiary: #E4E6EB;
+  
+  /* Couleurs d'état */
+  --success: #00C851;
+  --warning: #FFB300;
+  --error: #FF4444;
+  --info: #33B5E5;
+  
+  /* Ombres et bordures */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  
+  /* Bordures */
+  --border-radius-sm: 0.375rem;
+  --border-radius-md: 0.5rem;
+  --border-radius-lg: 0.75rem;
+  --border-radius-xl: 1rem;
+  
+  /* Transitions */
+  --transition-fast: 150ms ease-in-out;
+  --transition-normal: 250ms ease-in-out;
+  --transition-slow: 350ms ease-in-out;
+}
+
+/* Classes utilitaires pour les modales */
+.modal-whatsapp {
+  @apply fixed inset-0 bg-black/50 flex items-center justify-center z-50;
+}
+
+.modal-whatsapp-content {
+  @apply w-full max-w-md mx-4;
+}
+
+.modal-whatsapp-card {
+  @apply bg-white rounded-xl shadow-xl overflow-hidden;
+}
+
+.modal-whatsapp-header {
+  @apply bg-gradient-to-r from-[#128C7E] to-[#075E54] text-white px-6 py-4;
+}
+
+.modal-whatsapp-header h3 {
+  @apply text-xl font-bold text-center;
+}
+
+.modal-whatsapp-body {
+  @apply p-6 space-y-4;
+}
+
+.modal-whatsapp-footer {
+  @apply px-6 py-4 bg-gray-50 border-t border-gray-200;
+}
+
+/* Styles des formulaires */
+.form-whatsapp-group {
+  @apply space-y-2;
+}
+
+.form-whatsapp-label {
+  @apply block text-[#128C7E] font-semibold text-sm mb-1;
+}
+
+.form-whatsapp-input {
+  @apply w-full p-3 border border-[#128C7E]/30 rounded-lg focus:ring-2 focus:ring-[#128C7E] focus:border-[#128C7E] transition-all duration-200;
+}
+
+.form-whatsapp-input:focus {
+  @apply outline-none shadow-md;
+}
+
+.form-whatsapp-input.error {
+  @apply border-red-500 focus:ring-red-500 focus:border-red-500;
+}
+
+.form-whatsapp-error {
+  @apply text-red-500 text-xs mt-1;
+}
+
+.form-whatsapp-help {
+  @apply text-[#65676B] text-xs mt-1;
+}
+
+/* Boutons */
+.btn-whatsapp-primary {
+  @apply bg-[#128C7E] hover:bg-[#075E54] text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#128C7E] focus:ring-offset-2;
+}
+
+.btn-whatsapp-secondary {
+  @apply bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2;
+}
+
+.btn-whatsapp-success {
+  @apply bg-[#25D366] hover:bg-[#20C997] text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#25D366] focus:ring-offset-2;
+}
+
+.btn-whatsapp-warning {
+  @apply bg-[#FFB300] hover:bg-[#FFA000] text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#FFB300] focus:ring-offset-2;
+}
+
+.btn-whatsapp-danger {
+  @apply bg-[#FF4444] hover:bg-[#E53935] text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#FF4444] focus:ring-offset-2;
+}
+
+/* Cards et conteneurs */
+.card-whatsapp {
+  @apply bg-white border border-[#128C7E]/20 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200;
+}
+
+.card-whatsapp-header {
+  @apply px-4 py-3 border-b border-[#128C7E]/20 bg-[#F0F2F5];
+}
+
+.card-whatsapp-body {
+  @apply p-4;
+}
+
+.card-whatsapp-footer {
+  @apply px-4 py-3 border-t border-[#128C7E]/20 bg-[#F0F2F5];
+}
+
+/* États de chargement */
+.loading-whatsapp {
+  @apply flex items-center justify-center space-x-2 text-[#128C7E];
+}
+
+.loading-whatsapp-spinner {
+  @apply animate-spin rounded-full h-5 w-5 border-2 border-[#128C7E] border-t-transparent;
+}
+
+/* Messages et notifications */
+.message-whatsapp {
+  @apply p-3 rounded-lg border-l-4;
+}
+
+.message-whatsapp-success {
+  @apply bg-green-50 border-green-400 text-green-800;
+}
+
+.message-whatsapp-error {
+  @apply bg-red-50 border-red-400 text-red-800;
+}
+
+.message-whatsapp-warning {
+  @apply bg-yellow-50 border-yellow-400 text-yellow-800;
+}
+
+.message-whatsapp-info {
+  @apply bg-blue-50 border-blue-400 text-blue-800;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .modal-whatsapp-content {
+    @apply mx-2;
+  }
+  
+  .modal-whatsapp-body {
+    @apply p-4 space-y-3;
+  }
+  
+  .btn-whatsapp-primary,
+  .btn-whatsapp-secondary,
+  .btn-whatsapp-success,
+  .btn-whatsapp-warning,
+  .btn-whatsapp-danger {
+    @apply py-2.5 px-4 text-sm;
+  }
+}
+
+/* Animations */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-whatsapp-enter {
+  animation: slideIn 0.3s ease-out;
+}
+
+.modal-whatsapp-fade {
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* Focus visible pour l'accessibilité */
+.btn-whatsapp-primary:focus-visible,
+.btn-whatsapp-secondary:focus-visible,
+.form-whatsapp-input:focus-visible {
+  @apply ring-2 ring-offset-2 ring-[#128C7E];
+}

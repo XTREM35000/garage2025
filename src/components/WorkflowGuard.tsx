@@ -4,213 +4,359 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import SplashScreen from './SplashScreen';
 import InitializationWizard from './InitializationWizard';
+import CompletionSummaryModal from './CompletionSummaryModal';
+import {
+  WorkflowState,
+  ExtendedInitializationStep,
+  WorkflowStep,
+  WORKFLOW_STEPS
+} from '@/types/workflow';
 
 interface WorkflowGuardProps {
   children: React.ReactNode;
 }
 
-type WorkflowState = 'loading' | 'needs-init' | 'needs-auth' | 'ready' | 'completed';
-type InitStep = 'super-admin' | 'pricing' | 'create-admin' | 'create-organization' | 'sms-validation' | 'garage-setup';
-type WorkflowStep = 'pricing' | 'create-admin' | 'create-organization' | 'sms-validation' | 'garage-setup' | 'complete' | 'ready'; // Ajoutez 'ready' aux options possibles;
+// Séquence du workflow d'initialisation
+const WORKFLOW_SEQUENCE: readonly ExtendedInitializationStep[] = [
+  WORKFLOW_STEPS.SUPER_ADMIN,
+  WORKFLOW_STEPS.PRICING,
+  WORKFLOW_STEPS.CREATE_ADMIN,
+  WORKFLOW_STEPS.CREATE_ORGANIZATION,
+  WORKFLOW_STEPS.SMS_VALIDATION,
+  WORKFLOW_STEPS.GARAGE_SETUP
+] as const;
+
+// Types pour le profil utilisateur
+interface UserProfile {
+  id: string;
+  role: string;
+  status?: string;
+  email: string;
+  nom: string;
+}
+
+// Types pour l'organisation
+interface UserOrganization {
+  id: string;
+  organisation_id: string;
+  role: string;
+  status: string;
+}
 
 const WorkflowGuard: React.FC<WorkflowGuardProps> = ({ children }) => {
   const [workflowState, setWorkflowState] = useState<WorkflowState>('loading');
-  const [initStep, setInitStep] = useState<InitStep>('pricing');
+  const [initStep, setInitStep] = useState<ExtendedInitializationStep>('super-admin');
   const [loading, setLoading] = useState(true);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [userOrganization, setUserOrganization] = useState<UserOrganization | null>(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    checkWorkflowState();
-  }, []);
+  // Fonction pour mettre à jour l'étape du workflow
+  const updateWorkflowStep = async (userId: string, step: WorkflowStep, organisationId?: string) => {
+    try {
+      console.log('📝 Mise à jour workflow:', { userId, step, organisationId });
 
+      // Vérifier si un enregistrement existe déjà
+      const { data: existing } = await supabase
+        .from('onboarding_workflow_states')
+        .select('id')
+        .eq('user_id', userId)
+        .single();
+
+      const payload = {
+        user_id: userId,
+        current_step: step,
+        organisation_id: organisationId,
+        updated_at: new Date().toISOString()
+      };
+
+      let error;
+      if (existing) {
+        // Update
+        const { error: updateError } = await supabase
+          .from('onboarding_workflow_states')
+          .update(payload)
+          .eq('user_id', userId);
+        error = updateError;
+      } else {
+        // Insert
+        const { error: insertError } = await supabase
+          .from('onboarding_workflow_states')
+          .insert([payload]);
+        error = insertError;
+      }
+
+      if (error) {
+        console.error('❌ Erreur SQL:', error);
+        throw error;
+      }
+
+      console.log('✅ Workflow mis à jour:', step);
+      return true;
+    } catch (error) {
+      console.error('❌ Erreur mise à jour workflow:', error);
+      throw error;
+    }
+  };
+
+  // Fonction pour vérifier le profil et l'organisation de l'utilisateur
+  const checkUserAccess = async (userId: string) => {
+    try {
+      // 1. Récupérer le profil utilisateur
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, role, email, nom')
+        .eq('id', userId)
+        .single();
+
+      if (profileError) {
+        console.error('❌ Erreur récupération profil:', profileError);
+        return null;
+      }
+
+      setUserProfile(profile);
+
+      // 2. Récupérer l'organisation de l'utilisateur
+      const { data: orgData, error: orgError } = await supabase
+        .from('user_organizations')
+        .select(`
+          id,
+          organisation_id,
+          role,
+          status
+        `)
+        .eq('user_id', userId)
+        .single();
+
+      if (orgError && orgError.code !== 'PGRST116') { // PGRST116 = no rows returned
+        console.error('❌ Erreur récupération organisation:', orgError);
+      }
+
+      if (orgData) {
+        setUserOrganization(orgData);
+      }
+
+      return { profile, organization: orgData };
+    } catch (error) {
+      console.error('❌ Erreur vérification accès utilisateur:', error);
+      return null;
+    }
+  };
+
+  // Fonction principale de vérification du workflow
   const checkWorkflowState = async () => {
     try {
-      console.log('🔍 WorkflowGuard: Début vérification workflow...');
+      setLoading(true);
+      console.log('🔍 Vérification du workflow...');
 
-      // 1. Vérification Super Admin (PRIORITAIRE)
-      const { count, error: countError } = await supabase
-        .from('super_admins')
-        .select('*', { count: 'exact' });
-
-      if (countError) {
-        console.error('❌ Erreur lors de la vérification super_admins:', countError);
-        throw countError;
-      }
-
-      // Si pas de super admin, on force l'affichage du formulaire
-      if (count === 0) {
-        console.log('❌ Aucun Super Admin - Affichage forcé du formulaire super-admin');
-        setWorkflowState('needs-init');
-        setInitStep('super-admin');
-        setLoading(false);
-        return; // STOP ici - pas de vérification auth
-      }
-
-      // 2. Le reste des vérifications seulement si un super admin existe
-      console.log('✅ Super Admin existe, vérification auth...');
+      // 1. Récupérer l'utilisateur connecté
       const { data: { user } } = await supabase.auth.getUser();
 
       if (!user) {
-        console.log('❌ Pas d\'utilisateur connecté');
+        console.log('⚠️ Aucun utilisateur connecté');
         setWorkflowState('needs-auth');
         setLoading(false);
         return;
       }
-      console.log('✅ Utilisateur connecté:', user.email);
 
-      // 2. Vérification du profil admin
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
+      // 2. Vérifier le profil et l'organisation de l'utilisateur
+      const userAccess = await checkUserAccess(user.id);
 
-      if (profileError || !profileData) {
-        console.log('❌ Pas de profil admin, démarrage pricing');
-        setWorkflowState('needs-init');
-        setInitStep('pricing');
+      // 3. Si l'utilisateur a un profil avec le rôle "admin" et le status "tenant"
+      if (userAccess?.profile?.role === 'admin' && userAccess?.organization?.status === 'tenant') {
+        console.log('✅ Utilisateur Admin/Tenant détecté -> Accès au dashboard');
+        setWorkflowState('ready');
         setLoading(false);
         return;
       }
-      console.log('✅ Profil admin trouvé');
 
-      // 3. Vérification de l'organisation
-      const { data: orgData, error: orgError } = await supabase
-        .from('user_organizations')
-        .select('organisation_id')
+      // 4. Vérifier si un super admin existe
+      const { count: superAdminCount } = await supabase
+        .from('super_admins')
+        .select('*', { count: 'exact' });
+
+      console.log('👑 Nombre de super admins:', superAdminCount);
+
+      // 5. Si pas de super admin, commencer par là
+      if (superAdminCount === 0) {
+        console.log('⚠️ Pas de super admin -> Étape SUPER_ADMIN');
+        setInitStep(WORKFLOW_STEPS.SUPER_ADMIN);
+        setWorkflowState('needs-init');
+        setLoading(false);
+        return;
+      }
+
+      // 6. Vérifier l'état du workflow pour cet utilisateur
+      const { data: workflowData } = await supabase
+        .from('onboarding_workflow_states')
+        .select('current_step, organisation_id')
         .eq('user_id', user.id)
         .single();
 
-      if (orgError || !orgData) {
-        console.log('❌ Pas d\'organisation, démarrage create-organization');
-        setWorkflowState('needs-init');
-        setInitStep('create-organization');
-        setLoading(false);
-        return;
+      let nextStep: ExtendedInitializationStep;
+
+      // 7. Déterminer l'étape suivante
+      if (!workflowData) {
+        // Nouveau workflow -> commencer par PRICING
+        console.log('🆕 Nouveau workflow -> PRICING');
+        nextStep = WORKFLOW_STEPS.PRICING;
+      } else if (workflowData.current_step === WORKFLOW_STEPS.PRICING) {
+        // Après pricing -> CREATE_ADMIN
+        console.log('💰 Plan choisi -> CREATE_ADMIN');
+        nextStep = WORKFLOW_STEPS.CREATE_ADMIN;
+      } else {
+        // Garder l'étape en cours
+        nextStep = workflowData.current_step as ExtendedInitializationStep;
       }
-      console.log('✅ Organisation trouvée');
 
-      // 4. Vérification de la validation SMS
-      const { data: smsData, error: smsError } = await supabase
-        .from('sms_validations')
-        .select('is_validated')
-        .eq('user_id', user.id)
-        .single();
-
-      if (smsError || !smsData || !smsData.is_validated) {
-        console.log('❌ SMS non validé, démarrage sms-validation');
-        setWorkflowState('needs-init');
-        setInitStep('sms-validation');
-        setLoading(false);
-        return;
-      }
-      console.log('✅ SMS validé');
-
-      // 5. Vérification du garage setup
-      const { data: garageData, error: garageError } = await supabase
-        .from('garages')
-        .select('is_configured')
-        .eq('organisation_id', orgData.organisation_id)
-        .single();
-
-      if (garageError || !garageData || !garageData.is_configured) {
-        console.log('❌ Garage non configuré, démarrage garage-setup');
-        setWorkflowState('needs-init');
-        setInitStep('garage-setup');
-        setLoading(false);
-        return;
-      }
-      console.log('✅ Garage configuré');
-
-      // 6. Tout est OK, workflow complet
-      console.log('✅ Workflow complet, accès au dashboard');
-      setWorkflowState('completed');
-      setLoading(false);
+      console.log('✅ Étape déterminée:', nextStep);
+      setInitStep(nextStep);
+      setWorkflowState('needs-init');
 
     } catch (error) {
-      console.error('❌ Erreur générale:', error);
-      // En cas d'erreur sur la vérification super_admin, on force aussi le formulaire
-      setWorkflowState('needs-init');
-      setInitStep('super-admin');
+      console.error('❌ Erreur workflow:', error);
+      toast.error('Erreur de vérification du workflow');
+    } finally {
       setLoading(false);
     }
   };
 
-  // Fonctions utilitaires
-  const initializeUserWorkflow = async (userId: string) => {
-    const { error } = await supabase
-      .from('onboarding_workflow_states')
-      .insert({
-        user_id: userId,
-        current_step: 'pricing',
-        created_at: new Date().toISOString()
-      });
+  // Gestion de la progression du workflow
+  const handleInitComplete = async (completedStep: WorkflowStep) => {
+    try {
+      console.log('🎯 Étape terminée:', completedStep);
 
-    if (error) throw error;
-  };
+      if (completedStep === WORKFLOW_STEPS.GARAGE_SETUP) {
+        // Après setup garage, on passe à complete
+        setWorkflowState('completed');
+        return;
+      }
 
-  const updateWorkflowStep = async (userId: string, step: WorkflowStep) => {
-    const { error } = await supabase
-      .from('onboarding_workflow_states')
-      .update({ current_step: step })
-      .eq('user_id', userId);
+      // Force la progression après pricing vers CREATE_ADMIN
+      if (completedStep === WORKFLOW_STEPS.PRICING) {
+        console.log('🔄 Force progression vers CREATE_ADMIN');
+        const nextStep = WORKFLOW_STEPS.CREATE_ADMIN;
 
-    if (error) throw error;
-  };
+        // Tenter de mettre à jour en base si possible
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            await updateWorkflowStep(user.id, nextStep);
+          }
+        } catch (error) {
+          console.warn('⚠️ Pas d\'utilisateur, continue quand même');
+        }
 
-  const handleInitComplete = () => {
-    console.log('✅ Initialisation terminée - Vérification finale');
-    toast.success('Configuration terminée avec succès !');
+        // Force l'étape suivante même sans user
+        setInitStep(nextStep);
+        setWorkflowState('needs-init');
+        return;
+      }
 
-    // Si on vient de créer un super admin, redirection vers auth
-    if (initStep === 'super-admin') {
-      setWorkflowState('needs-auth');
-      return;
+      // Pour les autres étapes, on garde la vérification utilisateur
+      const { data: { user } } = await supabase.auth.getUser();
+
+      // Déterminer la prochaine étape
+      const currentIndex = WORKFLOW_SEQUENCE.indexOf(completedStep as ExtendedInitializationStep);
+      let nextStep: WorkflowStep = 'complete';
+
+      if (currentIndex < WORKFLOW_SEQUENCE.length - 1) {
+        nextStep = WORKFLOW_SEQUENCE[currentIndex + 1];
+      }
+
+      // Mise à jour si possible
+      if (user) {
+        await updateWorkflowStep(user.id, nextStep);
+      }
+
+      if (nextStep === 'complete') {
+        setWorkflowState('completed');
+      } else {
+        setInitStep(nextStep as ExtendedInitializationStep);
+        setWorkflowState('needs-init');
+      }
+
+    } catch (error) {
+      console.error('❌ Erreur progression:', error);
     }
-
-    // Marquer comme prêt et laisser le guard faire une nouvelle vérification
-    setWorkflowState('ready');
-
-    // Délai pour permettre au système de traiter les données
-    setTimeout(() => {
-      checkWorkflowState(); // Re-vérifier l'état après completion
-    }, 1000);
   };
 
-  // État de chargement
+  // Écouter les changements de session
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('🔄 État auth:', event, session?.user?.email);
+
+        if (event === 'SIGNED_IN') {
+          checkWorkflowState();
+        } else if (event === 'SIGNED_OUT') {
+          setWorkflowState('needs-auth');
+          setUserProfile(null);
+          setUserOrganization(null);
+          navigate('/login');
+        }
+      }
+    );
+
+    // Vérification initiale
+    checkWorkflowState();
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [navigate]);
+
+  // Rendu conditionnel
   if (loading) {
-    return <SplashScreen onComplete={() => {
-      setLoading(false);
-      // Ne pas rappeler checkWorkflowState ici
-    }} />;
+    return <SplashScreen onComplete={() => setLoading(false)} />;
   }
 
-  // Log pour debug
-  console.log('[WorkflowGuard Render] État actuel:', { workflowState, initStep, loading });
-
-  // Rendu strict basé sur l'état
-  if (workflowState === 'needs-auth' && initStep !== 'super-admin') {
-    window.location.href = '/auth';
-    return null;
+  // État d'authentification requis
+  if (workflowState === 'needs-auth') {
+    return <SplashScreen onComplete={() => checkWorkflowState()} />;
   }
 
+  // État d'initialisation requise
   if (workflowState === 'needs-init') {
-    console.log('[WorkflowGuard] Affichage InitializationWizard avec step:', initStep);
     return (
       <InitializationWizard
         isOpen={true}
-        onComplete={handleInitComplete}
-        startStep={initStep as 'pricing' | 'create-admin' | 'super-admin'}
-        mode={initStep === 'super-admin' ? 'super-admin' : 'normal'}
+        onComplete={() => handleInitComplete(initStep)}
+        startStep={initStep}
+        mode={initStep === WORKFLOW_STEPS.SUPER_ADMIN ? 'super-admin' : 'normal'}
       />
     );
   }
 
-  if (workflowState === 'completed' || workflowState === 'ready') {
-    return <>{children}</>;
+  // État d'initialisation terminée
+  if (workflowState === 'completed') {
+    return (
+      <CompletionSummaryModal
+        isOpen={true}
+        onClose={() => {
+          setWorkflowState('ready');
+          navigate('/dashboard');
+        }}
+      />
+    );
   }
 
-  return null;
+  // État prêt - afficher le contenu principal
+  if (workflowState === 'ready') {
+    // Si l'utilisateur est Admin/Tenant, afficher le dashboard
+    if (userProfile?.role === 'admin' && userOrganization?.status === 'tenant') {
+      console.log('🎯 Affichage du dashboard Admin/Tenant');
+      return children;
+    }
+    
+    // Sinon, continuer avec l'initialisation
+    console.log('🔄 Redémarrage de l\'initialisation');
+    setWorkflowState('needs-init');
+    return null;
+  }
+
+  // État par défaut
+  return <SplashScreen onComplete={() => checkWorkflowState()} />;
 };
 
 export default WorkflowGuard;

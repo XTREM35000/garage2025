@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,31 +18,31 @@ import {
   Building,
   User
 } from 'lucide-react';
-import { toast } from 'sonner';
 
-interface SmsValidationModalProps {
+export interface SmsValidationModalProps {
   isOpen: boolean;
-  onClose: () => void;
-  onValidate: (code?: string) => void | Promise<void>;
-  onRefuse: (code?: string) => void | Promise<void>;
+  onComplete: () => void;
+  organizationName?: string; // Ajout des props manquantes
   organizationCode?: string;
-  organizationName?: string;
   adminName?: string;
 }
 
 const SmsValidationModal: React.FC<SmsValidationModalProps> = ({
   isOpen,
-  onClose,
-  onValidate,
-  onRefuse,
-  organizationCode = 'ORG017791',
-  organizationName = 'Système d\'initialisation',
-  adminName = 'Admin Principal'
+  onComplete,
+  organizationName = 'Non défini', // Valeurs par défaut
+  organizationCode = 'XXX-XXX',
+  adminName = 'Non défini'
 }) => {
   const [smsCode, setSmsCode] = useState('');
   const [timeLeft, setTimeLeft] = useState(15 * 60); // 15 minutes en secondes
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [step, setStep] = useState<'phone' | 'code'>('phone');
+  const [formData, setFormData] = useState({
+    phone: '',
+    code: ''
+  });
 
   // Timer countdown
   useEffect(() => {
@@ -58,6 +60,70 @@ const SmsValidationModal: React.FC<SmsValidationModalProps> = ({
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
     return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
+
+  const handleSendCode = async () => {
+    if (!formData.phone) {
+      toast.error('Veuillez saisir un numéro de téléphone');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Utilisateur non connecté');
+
+      // Envoi du code SMS via la fonction RPC
+      const { error } = await supabase.rpc('send_validation_sms', {
+        phone_number: formData.phone,
+        user_id: user.id
+      });
+
+      if (error) throw error;
+
+      toast.success('Code envoyé avec succès!');
+      setStep('code');
+
+    } catch (error: any) {
+      console.error('❌ Erreur envoi SMS:', error);
+      toast.error(error.message || 'Erreur lors de l\'envoi du code');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyCode = async () => {
+    if (!formData.code) {
+      toast.error('Veuillez saisir le code reçu');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Utilisateur non connecté');
+
+      // Vérification du code via la fonction RPC
+      const { data, error } = await supabase.rpc('verify_sms_code', {
+        verification_code: formData.code,
+        user_id: user.id
+      });
+
+      if (error) throw error;
+
+      if (data && data.verified) {
+        toast.success('Numéro vérifié avec succès!');
+        onComplete();
+      } else {
+        toast.error('Code invalide');
+      }
+
+    } catch (error: any) {
+      console.error('❌ Erreur vérification:', error);
+      toast.error(error.message || 'Erreur lors de la vérification');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleResendCode = async () => {
@@ -92,7 +158,7 @@ const SmsValidationModal: React.FC<SmsValidationModalProps> = ({
 
       if (smsCode === '123456') { // Code de démonstration
         toast.success('Validation réussie !');
-        onValidate();
+        onComplete();
       } else {
         setError('Code SMS incorrect');
         toast.error('Code SMS incorrect');
@@ -107,148 +173,187 @@ const SmsValidationModal: React.FC<SmsValidationModalProps> = ({
 
   const handleRefuse = () => {
     toast.info('Demande refusée');
-    onRefuse();
+    onComplete();
+  };
+
+  // Fonction onClose
+  const handleClose = () => {
+    // Réinitialiser les états si nécessaire
+    setStep('phone');
+    setFormData({ phone: '', code: '' });
+    setError('');
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+    <Dialog open={isOpen}>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Shield className="h-5 w-5 text-blue-600" />
-            Validation Propriétaire
+          <DialogTitle>
+            {step === 'phone' ? 'Validation de votre numéro' : 'Saisissez le code'}
           </DialogTitle>
+          <DialogDescription>
+            {step === 'phone'
+              ? 'Un code de validation sera envoyé par SMS à ce numéro.'
+              : 'Entrez le code à 6 chiffres reçu par SMS.'
+            }
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Informations de la demande */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-gray-700">
-                Demande de Dépôt
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Organisation :</span>
-                <Badge variant="secondary" className="text-xs">
-                  <Building className="mr-1 h-3 w-3" />
-                  {organizationName}
-                </Badge>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Code Organisation :</span>
-                <div className="flex items-center">
-                  <Badge variant="outline" className="font-mono text-xs">
-                    {organizationCode}
-                  </Badge>
-                  <span
-                    role="button"
-                    aria-label="Copier le code organisation"
-                    title="Copier"
-                    className="ml-2 cursor-pointer select-none"
-                    style={{ fontSize: 20, lineHeight: '20px' }}
-                    onClick={async () => {
-                      try {
-                        await navigator.clipboard.writeText(organizationCode || '');
-                        toast.success('Code copié dans le presse-papiers');
-                      } catch (e) {
-                        toast.error('Impossible de copier le code');
-                      }
-                    }}
-                  >
-                    📋
-                  </span>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Administrateur :</span>
-                <div className="flex items-center gap-1">
-                  <User className="h-3 w-3 text-gray-500" />
-                  <span className="text-sm font-medium">{adminName}</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Code SMS */}
-          <div className="space-y-3">
-            <Label htmlFor="smsCode" className="flex items-center gap-2">
-              <Phone className="h-4 w-4" />
-              Code de Validation
-            </Label>
-            <p className="text-xs text-gray-600">
-              Entrez le code reçu par SMS
-            </p>
-
-            <div className="space-y-2">
+          {step === 'phone' ? (
+            <div className="space-y-4">
+              <Label htmlFor="phone">Numéro de téléphone</Label>
               <Input
-                id="smsCode"
-                type="text"
-                placeholder="123456"
-                value={smsCode}
-                onChange={(e) => {
-                  const value = e.target.value.replace(/\D/g, '').substring(0, 6);
-                  setSmsCode(value);
-                }}
-                className="text-center text-lg font-mono tracking-widest"
-                maxLength={6}
+                id="phone"
+                type="tel"
+                value={formData.phone}
+                onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                placeholder="+33 6 12 34 56 78"
+                pattern="^(?:(?:\+|00)33|0)\s*[1-9](?:[\s.-]*\d{2}){4}$"
+                title="Format: +33 6 12 34 56 78"
+                required
+                disabled={isLoading}
               />
+              <Button
+                onClick={handleSendCode}
+                className="w-full"
+                disabled={isLoading}
+              >
+                {isLoading ? 'Envoi...' : 'Envoyer le code'}
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {/* Informations de la demande */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-gray-700">
+                    Demande de Dépôt
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">Organisation :</span>
+                    <Badge variant="secondary" className="text-xs">
+                      <Building className="mr-1 h-3 w-3" />
+                      {organizationName}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">Code Organisation :</span>
+                    <div className="flex items-center">
+                      <Badge variant="outline" className="font-mono text-xs">
+                        {organizationCode}
+                      </Badge>
+                      <span
+                        role="button"
+                        aria-label="Copier le code organisation"
+                        title="Copier"
+                        className="ml-2 cursor-pointer select-none"
+                        style={{ fontSize: 20, lineHeight: '20px' }}
+                        onClick={async () => {
+                          try {
+                            await navigator.clipboard.writeText(organizationCode || '');
+                            toast.success('Code copié dans le presse-papiers');
+                          } catch (e) {
+                            toast.error('Impossible de copier le code');
+                          }
+                        }}
+                      >
+                        📋
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">Administrateur :</span>
+                    <div className="flex items-center gap-1">
+                      <User className="h-3 w-3 text-gray-500" />
+                      <span className="text-sm font-medium">{adminName}</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
-              {/* Timer */}
-              <div className="flex items-center justify-center gap-2 text-sm">
-                <Clock className="h-4 w-4 text-orange-500" />
-                <span className="text-orange-600 font-medium">
-                  Expire dans : {formatTime(timeLeft)}
-                </span>
+              {/* Code SMS */}
+              <div className="space-y-3">
+                <Label htmlFor="smsCode" className="flex items-center gap-2">
+                  <Phone className="h-4 w-4" />
+                  Code de Validation
+                </Label>
+                <p className="text-xs text-gray-600">
+                  Entrez le code reçu par SMS
+                </p>
+
+                <div className="space-y-2">
+                  <Input
+                    id="smsCode"
+                    type="text"
+                    placeholder="123456"
+                    value={smsCode}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, '').substring(0, 6);
+                      setSmsCode(value);
+                    }}
+                    className="text-center text-lg font-mono tracking-widest"
+                    maxLength={6}
+                  />
+
+                  {/* Timer */}
+                  <div className="flex items-center justify-center gap-2 text-sm">
+                    <Clock className="h-4 w-4 text-orange-500" />
+                    <span className="text-orange-600 font-medium">
+                      Expire dans : {formatTime(timeLeft)}
+                    </span>
+                  </div>
+                </div>
+
+                {error && (
+                  <Alert variant="destructive">
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                )}
+              </div>
+
+              {/* Actions */}
+              <div className="space-y-3">
+                <Button
+                  variant="outline"
+                  onClick={handleResendCode}
+                  disabled={isLoading || timeLeft > 0}
+                  className="w-full"
+                >
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Renvoyer le code
+                </Button>
+
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={handleRefuse}
+                    disabled={isLoading}
+                    className="flex-1"
+                  >
+                    <X className="mr-2 h-4 w-4" />
+                    Refuser
+                  </Button>
+                  <Button
+                    onClick={handleValidate}
+                    disabled={isLoading || !smsCode || smsCode.length !== 6}
+                    className="flex-1"
+                  >
+                    <Check className="mr-2 h-4 w-4" />
+                    Valider
+                  </Button>
+                </div>
+              </div>
+
+              {/* Note légale */}
+              <div className="text-xs text-gray-500 text-center p-3 bg-gray-50 rounded-lg">
+                En validant, vous autorisez {organizationName} à déposer votre véhicule.
+                Vous pouvez annuler cette autorisation à tout moment.
               </div>
             </div>
-
-            {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-          </div>
-
-          {/* Actions */}
-          <div className="space-y-3">
-            <Button
-              variant="outline"
-              onClick={handleResendCode}
-              disabled={isLoading || timeLeft > 0}
-              className="w-full"
-            >
-              <RefreshCw className="mr-2 h-4 w-4" />
-              Renvoyer le code
-            </Button>
-
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={handleRefuse}
-                disabled={isLoading}
-                className="flex-1"
-              >
-                <X className="mr-2 h-4 w-4" />
-                Refuser
-              </Button>
-              <Button
-                onClick={handleValidate}
-                disabled={isLoading || !smsCode || smsCode.length !== 6}
-                className="flex-1"
-              >
-                <Check className="mr-2 h-4 w-4" />
-                Valider
-              </Button>
-            </div>
-          </div>
-
-          {/* Note légale */}
-          <div className="text-xs text-gray-500 text-center p-3 bg-gray-50 rounded-lg">
-            En validant, vous autorisez {organizationName} à déposer votre véhicule.
-            Vous pouvez annuler cette autorisation à tout moment.
-          </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>

@@ -3,7 +3,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Check, Star, Zap, Crown, Sparkles, AlertTriangle, Clock } from 'lucide-react';
+import { Check, Star, Zap, Crown, Sparkles, AlertTriangle, Clock, CheckCircle, XCircle } from 'lucide-react';
+import '../styles/whatsapp-theme.css';
 
 interface PricingPlan {
   id: string;
@@ -15,17 +16,12 @@ interface PricingPlan {
   limitations: string[];
   popular?: boolean;
   icon: React.ComponentType<any>;
-  buttonColors: {
-    bg: string;
-    hover: string;
-    text: string;
-  };
-  cardGradient: string;
+  color: string;
 }
 
 interface PricingModalProps {
   isOpen: boolean;
-  onSelectPlan: (planId: string) => void;
+  onSelectPlan: (planId: string) => Promise<void> | void;
 }
 
 const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onSelectPlan }) => {
@@ -40,12 +36,7 @@ const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onSelectPlan }) => 
       period: '1 semaine',
       description: 'Découvrez notre solution pendant une semaine',
       icon: Star,
-      buttonColors: {
-        bg: 'bg-green-500',
-        hover: 'hover:bg-green-700',
-        text: 'text-white'
-      },
-      cardGradient: 'from-green-50 to-emerald-100',
+      color: 'from-green-400 to-green-600',
       features: [
         '1 garage seulement',
         'Gestion de base des véhicules',
@@ -65,12 +56,7 @@ const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onSelectPlan }) => 
       period: 'par mois',
       description: 'Solution flexible pour votre organisation',
       icon: Zap,
-      buttonColors: {
-        bg: 'bg-orange-500',
-        hover: 'hover:bg-orange-700',
-        text: 'text-white'
-      },
-      cardGradient: 'from-orange-50 to-amber-100',
+      color: 'from-[#128C7E] to-[#075E54]',
       popular: true,
       features: [
         '1 organisation',
@@ -94,182 +80,191 @@ const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onSelectPlan }) => 
       period: 'par an',
       description: 'Solution complète pour organisations multiples',
       icon: Crown,
-      buttonColors: {
-        bg: 'bg-blue-500',
-        hover: 'hover:bg-blue-700',
-        text: 'text-white'
-      },
-      cardGradient: 'from-blue-50 to-indigo-100',
+      color: 'from-purple-500 to-purple-700',
       features: [
         'Organisations multiples',
         'Instances illimitées',
-        'Tous les types d\'activités',
-        'Fonctionnalités avancées',
-        'Support premium 24/7',
-        'Formation personnalisée',
-        'API d\'intégration',
-        'Rapports analytiques avancés',
-        'Déploiement multi-sites',
-        'Paiement manuel'
+        'Utilisateurs illimités',
+        'Toutes les fonctionnalités',
+        'Support VIP 24/7',
+        'Sauvegarde automatique',
+        'Rapports avancés',
+        'Notifications SMS + Email',
+        'API personnalisée',
+        'Formation sur mesure',
+        'Déploiement dédié'
       ],
-      limitations: []
+      limitations: [
+        'Engagement annuel',
+        'Paiement en une fois'
+      ]
     }
   ];
 
-  const handlePlanSelect = async (planId: string) => {
+  const handlePlanSelection = async (planId: string) => {
     setSelectedPlan(planId);
     setIsLoading(true);
-    setTimeout(() => {
+    
+    try {
+      await onSelectPlan(planId);
+    } catch (error) {
+      console.error('Erreur lors de la sélection du plan:', error);
+    } finally {
       setIsLoading(false);
-      onSelectPlan(planId);
-    }, 500);
+    }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={() => {}}>
-      <DialogContent className="sm:max-w-5xl max-h-[90vh] overflow-y-auto bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-blue-900 border-blue-200 dark:border-blue-700">
-        <DialogHeader className="text-center">
-          <div className="mx-auto mb-4 w-16 h-16 bg-gradient-to-r from-blue-500 to-cyan-600 rounded-full flex items-center justify-center animate-pulse">
-            <Sparkles className="w-8 h-8 text-white" />
+    <Dialog open={isOpen}>
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto p-0">
+        <div className="modal-whatsapp-card">
+          {/* Header avec gradient WhatsApp */}
+          <div className="modal-whatsapp-header">
+            <div className="text-center space-y-4">
+              <div className="flex justify-center">
+                <div className="relative w-16 h-16 flex items-center justify-center">
+                  <div className="absolute inset-0 bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600 
+                             rounded-full opacity-90 blur-xl animate-pulse" />
+                  <div className="absolute inset-0 bg-gradient-to-tr from-orange-300 to-orange-500 
+                             rounded-full opacity-75 blur-lg animate-pulse delay-150" />
+                  <div className="relative bg-black/30 p-3 rounded-full backdrop-blur-sm">
+                    <Crown className="w-8 h-8 text-white" />
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <DialogTitle className="text-2xl font-bold text-white">
+                  Choisissez Votre Plan
+                </DialogTitle>
+                <DialogDescription className="text-white/90 mt-2">
+                  Sélectionnez le plan qui correspond le mieux à vos besoins
+                </DialogDescription>
+              </div>
+            </div>
           </div>
-          <DialogTitle className="text-3xl font-bold text-slate-800 dark:text-slate-200">
-            Choisissez votre plan tarifaire
-          </DialogTitle>
-          <DialogDescription className="text-slate-600 dark:text-slate-300 mt-2 text-lg">
-            Sélectionnez le plan qui correspond à vos besoins
-          </DialogDescription>
-        </DialogHeader>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
-          {plans.map((plan) => {
-            const PlanIcon = plan.icon;
-            const isSelected = selectedPlan === plan.id;
-
-            return (
-              <Card
-                key={plan.id}
-                className={`relative transition-all duration-300 cursor-pointer border-2 bg-gradient-to-br ${plan.cardGradient} ${
-                  isSelected
-                    ? 'border-blue-500 shadow-lg ring-2 ring-blue-500 ring-opacity-50'
-                    : 'border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600'
-                } ${plan.popular ? 'lg:scale-105 lg:z-10' : ''}`}
-                onClick={() => handlePlanSelect(plan.id)}
-              >
-                {plan.popular && (
-                  <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-orange-500 to-orange-600 text-white px-4 py-1 rounded-full text-sm font-semibold shadow-lg">
-                    <Star className="w-3 h-3 mr-1" />
-                    Le plus populaire
-                  </Badge>
-                )}
-
-                <CardHeader className="text-center pb-4">
-                  <div className={`mx-auto mb-4 w-12 h-12 ${plan.buttonColors.bg} rounded-full flex items-center justify-center shadow-lg`}>
-                    <PlanIcon className="w-6 h-6 text-white" />
-                  </div>
-                  <CardTitle className="text-xl font-bold text-slate-800 dark:text-slate-200">
-                    {plan.name}
-                  </CardTitle>
-                  <p className="text-slate-600 dark:text-slate-300 text-sm">
-                    {plan.description}
-                  </p>
-                </CardHeader>
-
-                <CardContent className="space-y-6">
-                  <div className="text-center">
-                    <div className="flex items-baseline justify-center gap-1">
-                      <span className="text-3xl font-bold text-slate-800 dark:text-slate-200">
-                        {plan.price === '0' ? 'Gratuit' : `${plan.price} FCFA`}
-                      </span>
-                      <span className="text-slate-500 dark:text-slate-400 text-sm">
-                        /{plan.period}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    <h4 className="font-semibold text-slate-700 dark:text-slate-300 text-sm">
-                      Inclus :
-                    </h4>
-                    {plan.features.map((feature, index) => (
-                      <div key={index} className="flex items-center gap-3">
-                        <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
-                          <Check className="w-3 h-3 text-white" />
-                        </div>
-                        <span className="text-sm text-slate-700 dark:text-slate-300">
-                          {feature}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-
-                  {plan.limitations.length > 0 && (
-                    <div className="space-y-3">
-                      <h4 className="font-semibold text-slate-700 dark:text-slate-300 text-sm flex items-center gap-2">
-                        <AlertTriangle className="w-4 h-4 text-amber-500" />
-                        Limitations :
-                      </h4>
-                      {plan.limitations.map((limitation, index) => (
-                        <div key={index} className="flex items-start gap-3">
-                          <div className="w-5 h-5 bg-amber-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                            <Clock className="w-3 h-3 text-white" />
-                          </div>
-                          <span className="text-sm text-amber-700 dark:text-amber-300">
-                            {limitation}
-                          </span>
-                        </div>
-                      ))}
+          {/* Body avec les plans */}
+          <div className="modal-whatsapp-body">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {plans.map((plan) => (
+                <div key={plan.id} className="relative">
+                  {/* Badge "Populaire" */}
+                  {plan.popular && (
+                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
+                      <Badge className="bg-gradient-to-r from-[#25D366] to-[#20C997] text-white px-4 py-1 rounded-full shadow-lg">
+                        <Sparkles className="w-3 h-3 mr-1" />
+                        Populaire
+                      </Badge>
                     </div>
                   )}
 
-                  <Button
-                    className={`w-full transition-all duration-300 font-semibold py-3 rounded-lg ${plan.buttonColors.bg} ${plan.buttonColors.hover} ${plan.buttonColors.text} shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed`}
-                    disabled={isLoading}
-                  >
-                    {isLoading && isSelected ? (
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        Activation en cours...
+                  {/* Card du plan */}
+                  <Card className={`h-full transition-all duration-300 hover:scale-105 ${
+                    plan.popular ? 'ring-2 ring-[#128C7E] shadow-xl' : 'hover:shadow-lg'
+                  }`}>
+                    <CardHeader className={`bg-gradient-to-br ${plan.color} text-white text-center pb-4`}>
+                      <div className="flex justify-center mb-2">
+                        <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                          <plan.icon className="w-6 h-6 text-white" />
+                        </div>
                       </div>
-                    ) : isSelected ? (
-                      <div className="flex items-center gap-2">
-                        <Check className="w-4 h-4" />
-                        Plan activé
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <Sparkles className="w-4 h-4" />
-                        {plan.id === 'free' ? 'Commencer gratuitement' : 'Choisir ce plan'}
-                      </div>
-                    )}
-                  </Button>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+                      <CardTitle className="text-xl font-bold">{plan.name}</CardTitle>
+                      <p className="text-white/90 text-sm">{plan.description}</p>
+                    </CardHeader>
 
-        <div className="mt-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
-          <div className="flex items-start gap-4">
-            <div>
-              <h4 className="font-semibold text-blue-800 dark:text-blue-200 mb-2 text-lg">
-                Activation immédiate et support garanti
-              </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-blue-700 dark:text-blue-300">
-                <div>
-                  <p className="mb-2">
-                    <strong>✓ Activation immédiate</strong> après sélection
-                  </p>
-                  <p className="mb-2">
-                    <strong>✓ Support technique</strong> inclus
-                  </p>
+                    <CardContent className="p-6 space-y-4">
+                      {/* Prix */}
+                      <div className="text-center">
+                        <div className="text-3xl font-bold text-gray-900">
+                          {plan.price === '0' ? 'Gratuit' : `${plan.price} FCFA`}
+                        </div>
+                        <div className="text-gray-600 text-sm">{plan.period}</div>
+                      </div>
+
+                      {/* Fonctionnalités */}
+                      <div className="space-y-3">
+                        <h4 className="font-semibold text-[#128C7E] text-sm uppercase tracking-wide">
+                          Fonctionnalités incluses
+                        </h4>
+                        <ul className="space-y-2">
+                          {plan.features.map((feature, index) => (
+                            <li key={index} className="flex items-start space-x-2">
+                              <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                              <span className="text-sm text-gray-700">{feature}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      {/* Limitations */}
+                      {plan.limitations.length > 0 && (
+                        <div className="space-y-3">
+                          <h4 className="font-semibold text-orange-600 text-sm uppercase tracking-wide">
+                            Limitations
+                          </h4>
+                          <ul className="space-y-2">
+                            {plan.limitations.map((limitation, index) => (
+                              <li key={index} className="flex items-start space-x-2">
+                                <XCircle className="w-4 h-4 text-orange-500 mt-0.5 flex-shrink-0" />
+                                <span className="text-sm text-gray-600">{limitation}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* Bouton de sélection */}
+                      <Button
+                        onClick={() => handlePlanSelection(plan.id)}
+                        disabled={isLoading}
+                        className={`w-full ${
+                          plan.popular 
+                            ? 'btn-whatsapp-primary' 
+                            : plan.id === 'free'
+                            ? 'btn-whatsapp-success'
+                            : 'btn-whatsapp-secondary'
+                        }`}
+                      >
+                        {isLoading && selectedPlan === plan.id ? (
+                          <span className="flex items-center gap-2">
+                            <div className="loading-whatsapp-spinner"></div>
+                            Sélection en cours...
+                          </span>
+                        ) : (
+                          <span className="flex items-center gap-2">
+                            {plan.id === 'free' ? (
+                              <>
+                                <Star className="w-4 h-4" />
+                                Commencer gratuitement
+                              </>
+                            ) : (
+                              <>
+                                <Check className="w-4 h-4" />
+                                Choisir ce plan
+                              </>
+                            )}
+                          </span>
+                        )}
+                      </Button>
+                    </CardContent>
+                  </Card>
                 </div>
-                <div>
-                  <p className="mb-2">
-                    <strong>✓ Migration facile</strong> entre les plans
-                  </p>
-                  <p>
-                    <strong>✓ Garantie de satisfaction</strong>
-                  </p>
+              ))}
+            </div>
+
+            {/* Informations supplémentaires */}
+            <div className="mt-8 p-4 bg-gray-50 rounded-lg border border-[#128C7E]/20">
+              <div className="flex items-start space-x-3">
+                <AlertTriangle className="w-5 h-5 text-[#128C7E] mt-0.5 flex-shrink-0" />
+                <div className="text-sm text-gray-700">
+                  <p className="font-medium text-[#128C7E] mb-1">Informations importantes</p>
+                  <ul className="space-y-1 text-gray-600">
+                    <li>• Tous les plans incluent une période d'essai de 7 jours</li>
+                    <li>• Possibilité de changer de plan à tout moment</li>
+                    <li>• Support technique inclus dans tous les plans</li>
+                    <li>• Données sauvegardées automatiquement</li>
+                  </ul>
                 </div>
               </div>
             </div>
