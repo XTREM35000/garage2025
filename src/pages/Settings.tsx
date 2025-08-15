@@ -88,10 +88,11 @@ const Settings: React.FC = () => {
           .from('user_settings')
           .select('*')
           .eq('user_id', authUser.id)
-          .single();
+          .maybeSingle(); // Utiliser maybeSingle au lieu de single
 
-        if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+        if (error) {
           console.error('Erreur lors de la récupération des paramètres:', error);
+          toast.error('Erreur lors du chargement des paramètres');
           return;
         }
 

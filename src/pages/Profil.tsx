@@ -35,17 +35,22 @@ import { FileService } from '@/lib/fileService';
 interface UserProfile {
   id: string;
   email: string;
+  full_name?: string;
+  phone?: string;
+  role?: string;
+  avatar_url?: string;
+  user_id?: string;
+  created_at?: string;
+  updated_at?: string;
+  // Ancien format pour compatibilité
   nom?: string;
   prenom?: string;
   telephone?: string;
-  role?: string;
   fonction?: string;
   specialite?: string;
   date_prise_fonction?: string;
   photo_url?: string;
   is_active?: boolean;
-  created_at?: string;
-  updated_at?: string;
 }
 
 const Profil: React.FC = () => {
@@ -101,33 +106,29 @@ const Profil: React.FC = () => {
       try {
         setLoading(true);
 
-        // Récupérer le profil depuis la table users
+        // Récupérer le profil depuis la table profiles
         const { data: profileData, error } = await supabase
-          .from('users')
+          .from('profiles')
           .select('*')
           .eq('id', authUser.id)
-          .single();
+          .maybeSingle();
 
         if (error) {
           console.error('Erreur lors de la récupération du profil:', error);
 
-          // Si l'utilisateur n'existe pas dans la table users, créer un profil par défaut
+          // Si l'utilisateur n'existe pas dans la table profiles, créer un profil par défaut
           if (error.code === 'PGRST116') {
-            console.log('Utilisateur non trouvé dans la table users, création d\'un profil par défaut');
+            console.log('Utilisateur non trouvé dans la table profiles, création d\'un profil par défaut');
 
             // Créer un profil par défaut basé sur les métadonnées auth
             const defaultProfile: UserProfile = {
               id: authUser.id,
               email: authUser.email || '',
-              nom: authUser.user_metadata?.full_name?.split(' ')[0] || '',
-              prenom: authUser.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
-              telephone: '',
-              role: 'employe',
-              fonction: '',
-              specialite: '',
-              date_prise_fonction: '',
-              photo_url: authUser.user_metadata?.avatar_url || '',
-              is_active: true,
+              full_name: authUser.user_metadata?.full_name || authUser.email || '',
+              phone: '',
+              role: 'user',
+              avatar_url: authUser.user_metadata?.avatar_url || '',
+              user_id: authUser.id,
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString()
             };
@@ -137,7 +138,7 @@ const Profil: React.FC = () => {
               full_name: authUser.user_metadata?.full_name || authUser.email || '',
               email: authUser.email || '',
               phone: '',
-              role: 'employe',
+              role: 'user',
               speciality: '',
               date_prise_fonction: '',
               organization_name: ''
@@ -157,17 +158,19 @@ const Profil: React.FC = () => {
         if (profileData) {
           setUserProfile(profileData);
           setFormData({
-            full_name: `${profileData.nom || ''} ${profileData.prenom || ''}`.trim(),
+            full_name: profileData.full_name || '',
             email: profileData.email || authUser.email || '',
-            phone: profileData.telephone || '',
+            phone: profileData.phone || '',
             role: profileData.role || '',
-            speciality: profileData.specialite || '',
-            date_prise_fonction: profileData.date_prise_fonction || '',
-            organization_name: profileData.fonction || ''
+            speciality: '',
+            date_prise_fonction: '',
+            organization_name: ''
           });
 
-          // L'avatar sera récupéré depuis les métadonnées utilisateur
-          if (authUser?.user_metadata?.avatar_url) {
+          // L'avatar sera récupéré depuis les métadonnées utilisateur ou le profil
+          if (profileData.avatar_url) {
+            setAvatarPreview(profileData.avatar_url);
+          } else if (authUser?.user_metadata?.avatar_url) {
             setAvatarPreview(authUser.user_metadata.avatar_url);
           }
         }
@@ -284,7 +287,7 @@ const Profil: React.FC = () => {
 
       // 4. Recharger les données
       const { data: updatedProfile, error: fetchError } = await supabase
-        .from('users')
+        .from('profiles')
         .select('*')
         .eq('id', authUser.id)
         .single();
@@ -312,15 +315,15 @@ const Profil: React.FC = () => {
     // Restaurer les données originales
     if (userProfile) {
       setFormData({
-        full_name: `${userProfile.nom || ''} ${userProfile.prenom || ''}`.trim(),
+        full_name: userProfile.full_name || '',
         email: userProfile.email || authUser?.email || '',
-        phone: userProfile.telephone || '',
+        phone: userProfile.phone || '',
         role: userProfile.role || '',
-        speciality: userProfile.specialite || '',
-        date_prise_fonction: userProfile.date_prise_fonction || '',
-        organization_name: userProfile.fonction || ''
+        speciality: '',
+        date_prise_fonction: '',
+        organization_name: ''
       });
-      setAvatarPreview(authUser?.user_metadata?.avatar_url || null);
+      setAvatarPreview(userProfile.avatar_url || authUser?.user_metadata?.avatar_url || null);
     }
   };
 
@@ -412,30 +415,32 @@ const Profil: React.FC = () => {
                   )}
                 </div>
                 <CardTitle className="text-2xl font-bold">
-                  {userProfile ? `${userProfile.nom || ''} ${userProfile.prenom || ''}`.trim() || authUser?.email : authUser?.email || 'Utilisateur'}
+                  {userProfile ? userProfile.full_name || authUser?.email : authUser?.email || 'Utilisateur'}
                 </CardTitle>
                 <div className="flex justify-center mb-2">
                   <Badge className={getRoleColor(userProfile?.role || '')}>
                     {getRoleLabel(userProfile?.role || '')}
                   </Badge>
                 </div>
-                <p className="text-muted-foreground">{userProfile?.specialite ? getSpecialityLabel(userProfile.specialite) : 'Spécialité non définie'}</p>
+                <p className="text-muted-foreground">
+                  {userProfile?.role ? getRoleLabel(userProfile.role) : 'Rôle non défini'}
+                </p>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center space-x-3">
                   <Mail className="w-5 h-5 text-gray-400" />
                   <span className="text-sm">{userProfile?.email || authUser?.email}</span>
                 </div>
-                {userProfile?.telephone && (
+                {userProfile?.phone && (
                   <div className="flex items-center space-x-3">
                     <Phone className="w-5 h-5 text-gray-400" />
-                    <span className="text-sm">{userProfile.telephone}</span>
+                    <span className="text-sm">{userProfile.phone}</span>
                   </div>
                 )}
-                {userProfile?.fonction && (
+                {userProfile?.role && (
                   <div className="flex items-center space-x-3">
                     <Building className="w-5 h-5 text-gray-400" />
-                    <span className="text-sm">{userProfile.fonction}</span>
+                    <span className="text-sm">{getRoleLabel(userProfile.role)}</span>
                   </div>
                 )}
                 <div className="flex justify-center pt-4">
@@ -501,7 +506,7 @@ const Profil: React.FC = () => {
                         className="h-10"
                       />
                     ) : (
-                      <p className="text-sm text-muted-foreground">{userProfile ? `${userProfile.nom || ''} ${userProfile.prenom || ''}`.trim() : 'Non renseigné'}</p>
+                      <p className="text-sm text-muted-foreground">{userProfile?.full_name || 'Non renseigné'}</p>
                     )}
                   </div>
                   <div className="space-y-2">
@@ -529,7 +534,7 @@ const Profil: React.FC = () => {
                         className="h-10"
                       />
                     ) : (
-                      <p className="text-sm text-muted-foreground">{userProfile?.telephone || 'Non renseigné'}</p>
+                      <p className="text-sm text-muted-foreground">{userProfile?.phone || 'Non renseigné'}</p>
                     )}
                   </div>
                 </div>
