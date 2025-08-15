@@ -3,7 +3,6 @@ import { toast } from 'sonner';
 import { supabase, createOrganizationWithAdmin } from '@/integrations/supabase/client';
 import type { CreateOrganizationResponse } from '@/integrations/supabase/client';
 import PricingModal from '@/components/PricingModal';
-import SuperAdminSetupModal from '@/components/SuperAdminSetupModal';
 import GarageSetupModal from '@/components/GarageSetupModal';
 import SmsValidationModal from '@/components/SmsValidationModal';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -16,11 +15,10 @@ import { Building2, User, Mail, Key, Phone, Eye, EyeOff } from 'lucide-react';
 interface InitializationWizardProps {
   isOpen: boolean;
   onComplete: () => void;
-  startStep: 'super-admin' | 'pricing' | 'create-admin';
+  startStep: 'pricing' | 'create-admin';
 }
 
 type WizardStep =
-  | 'super-admin'
   | 'pricing'
   | 'create-admin'
   | 'create-organization'
@@ -86,27 +84,55 @@ const InitializationWizard: React.FC<InitializationWizardProps> = ({
     setIsLoading(true);
 
     try {
-      // 1. Création du compte Auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      // 1. Vérifier si l'utilisateur existe
+      const { data: { user: existingUser }, error: getUserError } = await supabase.auth.getUser();
+
+      // Si un utilisateur est déjà connecté, passer directement à la création de l'organisation
+      if (existingUser) {
+        console.log('✅ Utilisateur déjà connecté');
+        setCurrentStep('create-organization');
+        setIsLoading(false);
+        return;
+      }
+
+      // 2. Essayer de se connecter d'abord
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email: adminData.email,
+        password: adminData.password
+      });
+
+      if (!signInError && signInData.user) {
+        console.log('✅ Connexion réussie avec compte existant');
+        setCurrentStep('create-organization');
+        setIsLoading(false);
+        return;
+      }
+
+      // 3. Si la connexion échoue, créer un nouveau compte
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: adminData.email,
         password: adminData.password,
         options: {
-          data: { // Metadata stockée dans auth.users
+          data: {
             full_name: adminData.name,
             phone: adminData.phone
           }
         }
       });
 
-      if (authError || !authData.user) {
-        throw authError || new Error('Échec création du compte');
+      if (signUpError) {
+        throw signUpError;
+      }
+
+      if (!signUpData.user) {
+        throw new Error('Échec création du compte');
       }
 
       // 2. Upload avatar (optionnel)
       let avatarUrl = null;
-      if (adminData.avatarFile) {
+      if (adminData.avatarFile && signUpData.user) {
         const fileExt = adminData.avatarFile.name.split('.').pop();
-        const filePath = `${authData.user.id}/avatar.${fileExt}`;
+        const filePath = `${signUpData.user.id}/avatar.${fileExt}`;
 
         const { error: uploadError } = await supabase.storage
           .from('avatars')
@@ -117,46 +143,76 @@ const InitializationWizard: React.FC<InitializationWizardProps> = ({
         }
       }
 
-      // 3. Mise à jour manuelle si nécessaire
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .upsert({
-          id: authData.user.id,
-          email: adminData.email,
-          user_id: authData.user.id,
-          full_name: adminData.name,
-          phone: adminData.phone,
-          avatar_url: avatarUrl,
-          actif: true,
-          role: 'admin'
-        });
+      // 3. Mise à jour du profil pour le nouvel utilisateur
+      const currentUser = signUpData.user;
+      if (currentUser) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .upsert({
+            id: currentUser.id,
+            email: adminData.email,
+            user_id: currentUser.id,
+            full_name: adminData.name,
+            phone: adminData.phone,
+            avatar_url: avatarUrl,
+            role: 'admin'
+          });
 
-      if (profileError) throw profileError;
+        if (profileError) throw profileError;
+      }
 
-      toast.success('Administrateur créé avec succès!');
+      toast.success('Compte créé avec succès!');
       setCurrentStep('create-organization');
 
     } catch (error) {
       console.error('Erreur:', error);
-      toast.error(
-        error.message.includes('already exists') ? 'Email déjà utilisé' :
-          error.message.includes('duplicate key') ? 'Compte déjà existant' :
-            'Erreur technique'
-      );
+      if (error.message?.includes('Invalid login credentials')) {
+        toast.error('Mot de passe incorrect. Si vous avez un compte, vérifiez vos identifiants.');
+      } else if (error.message?.includes('already registered') || error.message?.includes('already exists')) {
+        // Réessayer la connexion
+        try {
+          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+            email: adminData.email,
+            password: adminData.password
+          });
+
+          if (!signInError && signInData.user) {
+            toast.success('Connexion réussie avec compte existant');
+            setCurrentStep('create-organization');
+            return;
+          }
+
+          toast.error('Cet email est déjà utilisé. Veuillez utiliser un autre email ou vous connecter.');
+        } catch {
+          toast.error('Erreur de connexion. Vérifiez vos identifiants.');
+        }
+      } else {
+        toast.error('Une erreur technique est survenue. Veuillez réessayer.');
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
   // Gestion de la création de l'organisation
+  const generateOrgCode = () => {
+    // Code fixe pour la démo
+    return 'ORG012025';
+  };
+
   const handleOrganizationSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
+      // Utiliser le code fixe pour la démo
+      const orgCode = generateOrgCode();
+
       console.log('🔍 Tentative création organisation avec données:', {
         name: organizationData.name,
-        plan: organizationData.selectedPlan
+        plan: organizationData.selectedPlan,
+        code: orgCode,
+        demo: true
       });
 
       // Utiliser la fonction RPC avec typage et vérification robuste
@@ -164,7 +220,8 @@ const InitializationWizard: React.FC<InitializationWizardProps> = ({
         name: organizationData.name,
         adminEmail: adminData.email,
         adminName: adminData.name,
-        plan: organizationData.selectedPlan === 'annual' ? 'yearly' : 'monthly'
+        plan: organizationData.selectedPlan === 'annual' ? 'yearly' : 'monthly',
+        code: orgCode
       });
 
       console.log('✅ Réponse création organisation:', result);
@@ -173,21 +230,23 @@ const InitializationWizard: React.FC<InitializationWizardProps> = ({
         throw new Error(result.error.message || 'Erreur création organisation');
       }
 
-      // Lier l'utilisateur admin à l'organisation dans public.users
+      // Lier l'utilisateur admin à l'organisation dans public.profiles
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (user?.id) {
-          const { error: linkError } = await supabase.rpc('upsert_user_profile', {
-            user_id: user.id,
-            user_email: adminData.email,
-            full_name: adminData.name,
-            phone: adminData.phone,
-            user_role: 'admin',
-            organization_id: result.data?.id,
-            avatar_url: null
-          });
+          const { error: linkError } = await supabase
+            .from('profiles')
+            .upsert({
+              id: user.id,
+              email: adminData.email,
+              user_id: user.id,
+              full_name: adminData.name,
+              phone: adminData.phone,
+              role: 'admin',
+              organisation_id: result.data?.id
+            });
           if (linkError) {
-            console.warn('⚠️ Erreur liaison organisation_id sur users:', linkError);
+            console.warn('⚠️ Erreur liaison organisation_id sur profiles:', linkError);
           }
         }
       } catch (e) {
@@ -248,14 +307,6 @@ const InitializationWizard: React.FC<InitializationWizardProps> = ({
 
   // Rendu selon l'étape
   switch (currentStep) {
-    case 'super-admin':
-      return (
-        <SuperAdminSetupModal
-          isOpen={isOpen}
-          onComplete={handleSuperAdminCreated}
-        />
-      );
-
     case 'pricing':
       return (
         <PricingModal
@@ -386,13 +437,16 @@ const InitializationWizard: React.FC<InitializationWizardProps> = ({
     case 'create-organization':
       return (
         <Dialog open={isOpen} onOpenChange={() => { }}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent
+            className="max-w-2xl max-h-[90vh] overflow-y-auto"
+            aria-describedby="organisation-form-description"
+          >
             <DialogHeader>
               <DialogTitle className="text-center text-2xl font-bold flex items-center justify-center gap-2">
                 <Building2 className="h-6 w-6 text-primary" />
                 Création de l'Organisation
               </DialogTitle>
-              <DialogDescription className="text-center">
+              <DialogDescription id="organisation-form-description" className="text-center">
                 Configurez votre organisation avec les informations de base.
               </DialogDescription>
             </DialogHeader>

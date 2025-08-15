@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SplashScreen from '@/components/SplashScreen';
 import PricingModal from '@/components/PricingModal';
-import SuperAdminSetupModal from '@/components/SuperAdminSetupModal';
-import { OrganisationOnboarding } from '@/components/OrganisationOnboarding';
+import OrganisationOnboarding from '@/components/OrganisationOnboarding';
 import BrandSetupWizard from '@/components/BrandSetupWizard';
 
 interface SimpleSetupProps {
@@ -11,12 +10,11 @@ interface SimpleSetupProps {
   children: React.ReactNode;
 }
 
-export type SetupStep = 'splash' | 'pricing' | 'super-admin' | 'organisation' | 'brand' | 'complete' | 'redirect-auth';
+export type SetupStep = 'splash' | 'pricing' | 'organisation' | 'brand' | 'complete' | 'redirect-auth';
 
 const SimpleSetup: React.FC<SimpleSetupProps> = ({ onComplete, children }) => {
   const [currentStep, setCurrentStep] = useState<SetupStep>('splash');
   const [selectedPlan, setSelectedPlan] = useState<string>('');
-  const [superAdminData, setSuperAdminData] = useState<any>(null);
   const [organisationId, setOrganisationId] = useState<string>('');
   const navigate = useNavigate();
 
@@ -27,11 +25,6 @@ const SimpleSetup: React.FC<SimpleSetupProps> = ({ onComplete, children }) => {
 
   const handlePlanSelection = (planId: string) => {
     setSelectedPlan(planId);
-    setCurrentStep('super-admin');
-  };
-
-  const handleSuperAdminCreated = (adminData: any) => {
-    setSuperAdminData(adminData);
     setCurrentStep('organisation');
   };
 
@@ -52,24 +45,15 @@ const SimpleSetup: React.FC<SimpleSetupProps> = ({ onComplete, children }) => {
 
     case 'pricing':
       return (
-        <PricingModal 
-          isOpen={true} 
-          onSelectPlan={handlePlanSelection}
-        />
-      );
-
-    case 'super-admin':
-      return (
-        <SuperAdminSetupModal
+        <PricingModal
           isOpen={true}
-          onComplete={handleSuperAdminCreated}
+          onSelectPlan={handlePlanSelection}
         />
       );
 
     case 'organisation':
       return (
         <OrganisationOnboarding
-          isOpen={true}
           onComplete={handleOrganisationCreated}
           plan={selectedPlan}
         />

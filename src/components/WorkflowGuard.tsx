@@ -10,11 +10,12 @@ interface WorkflowGuardProps {
 }
 
 type WorkflowState = 'loading' | 'needs-init' | 'needs-auth' | 'ready';
-type InitStep = 'super-admin' | 'pricing' | 'create-admin' | 'create-organization' | 'sms-validation' | 'garage-setup';
+type InitStep = 'pricing' | 'create-admin' | 'create-organization' | 'sms-validation' | 'garage-setup';
+type WorkflowStep = 'pricing' | 'create-admin' | 'create-organization' | 'sms-validation' | 'garage-setup' | 'complete';
 
 const WorkflowGuard: React.FC<WorkflowGuardProps> = ({ children }) => {
   const [workflowState, setWorkflowState] = useState<WorkflowState>('loading');
-  const [initStep, setInitStep] = useState<InitStep>('super-admin');
+  const [initStep, setInitStep] = useState<InitStep>('pricing');
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -26,26 +27,25 @@ const WorkflowGuard: React.FC<WorkflowGuardProps> = ({ children }) => {
     console.log('[1] 🔍 Début vérification workflow');
 
     try {
-      // 1. Vérification des super admins
-      const { data: superAdmins, error: adminError } = await supabase
-        .from('super_admins')
-        .select('id, est_actif')
-        .eq('est_actif', true)
-        .limit(1);
+      // Vérifier l'état du workflow dans la base de données
+      const { data: workflowData, error: workflowError } = await supabase
+        .from('onboarding_workflow_states')
+        .select('current_step')
+        .maybeSingle() as unknown as {
+          data: { current_step: WorkflowStep } | null;
+          error: Error | null;
+        };
 
-      console.log('[2] 📊 Résultat super_admins:', { superAdmins, adminError });
-
-      // Gestion erreur super_admins
-      if (adminError) {
-        console.error('[3] ❌ Erreur vérification super_admins:', adminError);
-        throw new Error('Erreur vérification super_admins');
+      if (workflowError) {
+        console.error('[2] ❌ Erreur vérification workflow:', workflowError);
+        throw new Error('Erreur vérification workflow');
       }
 
-      // Si pas de super admin actif, initialisation requise
-      if (!superAdmins || superAdmins.length === 0) {
-        console.log('[4] ℹ️ Aucun super admin trouvé → Initialisation');
+      // Si pas d'état de workflow ou si l'étape est pricing, on commence par là
+      if (!workflowData || workflowData.current_step === 'pricing') {
+        console.log('[3] ℹ️ Démarrage au pricing');
         setWorkflowState('needs-init');
-        setInitStep('super-admin');
+        setInitStep('pricing');
         return;
       }
 
@@ -85,7 +85,7 @@ const WorkflowGuard: React.FC<WorkflowGuardProps> = ({ children }) => {
       console.error('[ERROR CRITIQUE] Workflow guard:', error);
       // En cas d'erreur, on force l'initialisation
       setWorkflowState('needs-init');
-      setInitStep('super-admin');
+      setInitStep('pricing');
     } finally {
       setLoading(false);
     }
@@ -118,7 +118,7 @@ const WorkflowGuard: React.FC<WorkflowGuardProps> = ({ children }) => {
       <InitializationWizard
         isOpen={true}
         onComplete={handleInitComplete}
-        startStep={initStep as 'super-admin' | 'pricing' | 'create-admin'}
+        startStep={initStep as 'pricing' | 'create-admin'}
       />
     );
   }
