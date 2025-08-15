@@ -205,66 +205,74 @@ const InitializationWizard: React.FC<InitializationWizardProps> = ({
     setIsLoading(true);
 
     try {
-      // Utiliser le code fixe pour la démo
       const orgCode = generateOrgCode();
+      const { data: { user } } = await supabase.auth.getUser();
 
-      console.log('🔍 Tentative création organisation avec données:', {
-        name: organizationData.name,
-        plan: organizationData.selectedPlan,
-        code: orgCode,
-        demo: true
+      if (!user) throw new Error('User not authenticated');
+
+      // 1. Création de l'organisation
+      const { data, error } = await supabase.rpc('create_organisation_with_admin', {
+        org_name: organizationData.name,
+        org_subscription_plan: organizationData.selectedPlan,
+        org_code: orgCode,
+        is_demo: true,
+        admin_id: user.id
       });
 
-      // Utiliser la fonction RPC avec typage et vérification robuste
-      const result: CreateOrganizationResponse = await createOrganizationWithAdmin({
-        name: organizationData.name,
-        adminEmail: adminData.email,
-        adminName: adminData.name,
-        plan: organizationData.selectedPlan === 'annual' ? 'yearly' : 'monthly',
-        code: orgCode
-      });
+      if (error) throw error;
 
-      console.log('✅ Réponse création organisation:', result);
+      console.log('✅ Réponse création organisation:', data);
 
-      if (result.error) {
-        throw new Error(result.error.message || 'Erreur création organisation');
+      if (!data.organisation_id) {
+        throw new Error('ID organisation manquant dans la réponse');
       }
 
-      // Lier l'utilisateur admin à l'organisation dans public.profiles
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user?.id) {
-          const { error: linkError } = await supabase
-            .from('profiles')
-            .upsert({
-              id: user.id,
-              email: adminData.email,
-              user_id: user.id,
-              full_name: adminData.name,
-              phone: adminData.phone,
-              role: 'admin',
-              organisation_id: result.data?.id
-            });
-          if (linkError) {
-            console.warn('⚠️ Erreur liaison organisation_id sur profiles:', linkError);
-          }
-        }
-      } catch (e) {
-        console.warn('⚠️ Impossible de lier organisation_id (non bloquant):', e);
+      // 2. Mise à jour du profil utilisateur
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .upsert({
+          id: user.id,
+          organisation_id: data.organisation_id,
+          role: 'admin'
+        });
+
+      if (profileError) {
+        console.warn('⚠️ Avertissement profil:', profileError);
       }
 
-      // Mettre à jour les données avec le code généré (valeur par défaut si absent)
-      setOrganizationData(prev => ({
-        ...prev,
-        code: result.data?.code ?? 'N/A'
-      }));
+      // 3. Mise à jour du workflow state
+      const { error: workflowError } = await supabase
+        .from('onboarding_workflow_states')
+        .upsert({
+          user_id: user.id,
+          organisation_id: data.organisation_id,
+          current_step: 'sms-validation', // Étape suivante
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'user_id' // Mise à jour si l'entrée existe déjà
+        });
 
+      if (workflowError) {
+        console.warn('⚠️ Erreur mise à jour workflow:', workflowError);
+      }
+
+      // 4. Nettoyage UI et transition
+      toast.dismiss();
       toast.success('Organisation créée avec succès!');
 
-      // Afficher la validation SMS/paiement après création d'organisation
+      // 5. Passage à l'étape suivante
       setCurrentStep('sms-validation');
+
+      // 6. Mise à jour locale des données
+      setOrganizationData(prev => ({
+        ...prev,
+        code: data.code || orgCode,
+        id: data.organisation_id
+      }));
+
     } catch (error: any) {
-      toast.error('Erreur lors de la création de l\'organisation: ' + (error.message || 'Erreur inconnue'));
+      console.error('❌ Erreur création organisation:', error);
+      toast.error(`Erreur création organisation: ${error.message}`);
     } finally {
       setIsLoading(false);
     }

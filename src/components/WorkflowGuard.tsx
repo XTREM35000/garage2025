@@ -11,7 +11,7 @@ interface WorkflowGuardProps {
 
 type WorkflowState = 'loading' | 'needs-init' | 'needs-auth' | 'ready';
 type InitStep = 'pricing' | 'create-admin' | 'create-organization' | 'sms-validation' | 'garage-setup';
-type WorkflowStep = 'pricing' | 'create-admin' | 'create-organization' | 'sms-validation' | 'garage-setup' | 'complete';
+type WorkflowStep = 'pricing' | 'create-admin' | 'create-organization' | 'sms-validation' | 'garage-setup' | 'complete' | 'ready'; // Ajoutez 'ready' aux options possibles;
 
 const WorkflowGuard: React.FC<WorkflowGuardProps> = ({ children }) => {
   const [workflowState, setWorkflowState] = useState<WorkflowState>('loading');
@@ -27,68 +27,81 @@ const WorkflowGuard: React.FC<WorkflowGuardProps> = ({ children }) => {
     console.log('[1] 🔍 Début vérification workflow');
 
     try {
-      // Vérifier l'état du workflow dans la base de données
-      const { data: workflowData, error: workflowError } = await supabase
-        .from('onboarding_workflow_states')
-        .select('current_step')
-        .maybeSingle() as unknown as {
-          data: { current_step: WorkflowStep } | null;
-          error: Error | null;
-        };
+      // 1. Vérification de la session
+      const { data: { session }, error: authError } = await supabase.auth.getSession();
 
-      if (workflowError) {
-        console.error('[2] ❌ Erreur vérification workflow:', workflowError);
-        throw new Error('Erreur vérification workflow');
+      if (authError) throw authError;
+      if (!session) {
+        setWorkflowState('needs-auth');
+        return;
       }
 
-      // Si pas d'état de workflow ou si l'étape est pricing, on commence par là
-      if (!workflowData || workflowData.current_step === 'pricing') {
-        console.log('[3] ℹ️ Démarrage au pricing');
+      // 2. Récupération du profil
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', session.user.id)
+        .single();
+
+      if (profileError) throw profileError;
+
+      // 3. Vérification du workflow state
+      const { data: workflow, error: workflowError } = await supabase
+        .from('onboarding_workflow_states')
+        .select('current_step')
+        .eq('profile_id', profile.id)
+        .maybeSingle();
+
+      if (workflowError) throw workflowError;
+
+      // 4. Initialisation si nécessaire
+      if (!workflow) {
+        const { error } = await supabase
+          .from('onboarding_workflow_states')
+          .insert({
+            profile_id: profile.id,
+            current_step: 'pricing'
+          });
+
+        if (error) throw error;
         setWorkflowState('needs-init');
         setInitStep('pricing');
         return;
       }
 
-      // 2. Vérification de la session
-      const { data: { session } } = await supabase.auth.getSession();
-      console.log('[5] 🔐 Session:', session ? 'Active' : 'Inactive');
-
-      if (!session) {
-        console.log('[6] 🚫 Pas de session → Auth requise');
-        setWorkflowState('needs-auth');
-        return;
-      }
-
-      // 3. Vérification des organisations
-      const { count: orgCount, error: orgError } = await supabase
-        .from('organisations')
-        .select('*', { count: 'exact', head: true });
-
-      console.log('[7] 🏢 Nombre d\'organisations:', orgCount);
-
-      if (orgError) {
-        console.error('[8] ❌ Erreur vérification organisations:', orgError);
-        throw new Error('Erreur vérification organisations');
-      }
-
-      // 4. Décision finale basée sur l'état
-      if (orgCount === 0) {
-        console.log('[9] ℹ️ Aucune organisation → Création admin');
-        setWorkflowState('needs-init');
-        setInitStep('create-admin');
-      } else {
-        console.log('[10] ✅ Système initialisé → Ready');
-        setWorkflowState('ready');
-      }
+      // 5. Gestion des états
+      setWorkflowState(workflow.current_step === 'complete' ? 'ready' : 'needs-init');
+      setInitStep(workflow.current_step);
 
     } catch (error) {
-      console.error('[ERROR CRITIQUE] Workflow guard:', error);
-      // En cas d'erreur, on force l'initialisation
+      console.error('Erreur workflow:', error);
       setWorkflowState('needs-init');
       setInitStep('pricing');
     } finally {
       setLoading(false);
     }
+  };
+
+  // Fonctions utilitaires
+  const initializeUserWorkflow = async (userId: string) => {
+    const { error } = await supabase
+      .from('onboarding_workflow_states')
+      .insert({
+        user_id: userId,
+        current_step: 'pricing',
+        created_at: new Date().toISOString()
+      });
+
+    if (error) throw error;
+  };
+
+  const updateWorkflowStep = async (userId: string, step: WorkflowStep) => {
+    const { error } = await supabase
+      .from('onboarding_workflow_states')
+      .update({ current_step: step })
+      .eq('user_id', userId);
+
+    if (error) throw error;
   };
 
   const handleInitComplete = () => {

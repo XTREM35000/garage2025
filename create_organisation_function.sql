@@ -2,121 +2,111 @@
 -- À exécuter dans le SQL Editor de Supabase
 
 -- Supprimer l'ancienne fonction si elle existe
-DROP FUNCTION IF EXISTS public.create_organisation_with_admin(jsonb, jsonb);
+DROP FUNCTION IF EXISTS public.create_organisation_with_admin(jsonb);
 
--- Créer la nouvelle fonction avec des objets structurés
+-- Créer la nouvelle fonction avec un seul objet de données
 CREATE OR REPLACE FUNCTION public.create_organisation_with_admin(
-    org_data jsonb,
-    admin_data jsonb
+    org_data jsonb
 )
-RETURNS json
+RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 DECLARE
     new_org_id uuid;
-    new_admin_id uuid;
-    new_org json;
-    new_admin json;
-    result json;
+    current_user_id uuid;
+    new_org jsonb;
+    new_profile jsonb;
+    result jsonb;
 BEGIN
+    -- Récupérer l'ID de l'utilisateur courant
+    current_user_id := auth.uid();
+    
+    IF current_user_id IS NULL THEN
+        RAISE EXCEPTION 'Utilisateur non authentifié';
+    END IF;
+
     -- 1. Créer l'organisation
-    INSERT INTO organisations (
+    INSERT INTO public.organisations (
         name, 
-        code, 
-        slug, 
-        email, 
-        subscription_type, 
-        is_active
+        code,
+        subscription_type,
+        status
     ) VALUES (
         org_data->>'name',
-        org_data->>'code',
-        org_data->>'slug',
-        org_data->>'email',
-        COALESCE(org_data->>'subscription_type', 'monthly'),
-        true
+        COALESCE(org_data->>'code', 'ORG012025'),
+        COALESCE(org_data->>'subscription_type', 'free'),
+        'active'
     ) RETURNING id INTO new_org_id;
 
-    -- 2. Créer l'utilisateur admin dans auth.users
-    INSERT INTO auth.users (
+    -- 2. Créer/Mettre à jour le profil dans profiles
+    INSERT INTO public.profiles (
+        id,
+        user_id,
         email,
-        encrypted_password,
-        email_confirmed_at,
-        created_at,
-        updated_at,
-        raw_app_meta_data,
-        raw_user_meta_data,
-        is_super_admin,
-        confirmation_token,
-        email_change,
-        email_change_token_new,
-        recovery_token
-    ) VALUES (
-        admin_data->>'email',
-        crypt(admin_data->>'password', gen_salt('bf')),
-        now(),
-        now(),
-        now(),
-        jsonb_build_object(
-            'provider', 'email',
-            'providers', ARRAY['email'],
-            'full_name', admin_data->>'full_name'
-        ),
-        jsonb_build_object(
-            'full_name', admin_data->>'full_name'
-        ),
-        false,
-        encode(gen_random_bytes(32), 'hex'),
-        '',
-        encode(gen_random_bytes(32), 'hex'),
-        encode(gen_random_bytes(32), 'hex')
-    ) RETURNING id INTO new_admin_id;
-
-    -- 3. Créer l'utilisateur dans la table users
-    INSERT INTO users (
-        auth_user_id,
         full_name,
-        email,
         role,
         organisation_id,
-        is_active
+        status
     ) VALUES (
-        new_admin_id,
-        admin_data->>'full_name',
-        admin_data->>'email',
-        'proprietaire',
+        current_user_id,
+        current_user_id,
+        org_data->>'email',
+        COALESCE(org_data->>'admin_name', org_data->>'email'),
+        'admin',
         new_org_id,
         true
-    );
+    )
+    ON CONFLICT (id) DO UPDATE SET
+        organisation_id = EXCLUDED.organisation_id,
+        role = EXCLUDED.role,
+        updated_at = now()
+    RETURNING jsonb_build_object(
+        'id', id,
+        'email', email,
+        'full_name', full_name,
+        'role', role
+    ) INTO new_profile;
 
-    -- 4. Créer la relation user_organisations
-    INSERT INTO user_organisations (
-        user_id,
+    -- 3. Initialiser le workflow
+    INSERT INTO public.onboarding_workflow_states (
         organisation_id,
-        role
+        current_step,
+        is_completed,
+        created_by
     ) VALUES (
-        new_admin_id,
         new_org_id,
-        'proprietaire'
+        'organization_created',
+        false,
+        current_user_id
     );
 
-    -- 5. Récupérer les données créées
-    SELECT row_to_json(o.*) INTO new_org
-    FROM organisations o
-    WHERE o.id = new_org_id;
+    -- 4. Récupérer les données de l'organisation
+    SELECT jsonb_build_object(
+        'id', id,
+        'name', name,
+        'code', code,
+        'subscription_type', subscription_type,
+        'status', status,
+        'created_at', created_at
+    ) INTO new_org
+    FROM public.organisations
+    WHERE id = new_org_id;
 
-    SELECT row_to_json(u.*) INTO new_admin
-    FROM users u
-    WHERE u.auth_user_id = new_admin_id;
-
-    -- 6. Retourner le résultat
-    result := json_build_object(
+    -- 5. Retourner le résultat
+    result := jsonb_build_object(
         'organisation', new_org,
-        'admin', new_admin,
-        'success', true
+        'profile', new_profile,
+        'status', 'success'
     );
 
     RETURN result;
+EXCEPTION WHEN OTHERS THEN
+    RETURN jsonb_build_object(
+        'status', 'error',
+        'message', SQLERRM,
+        'detail', SQLSTATE
+    );
 END;
 $$;
 

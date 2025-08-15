@@ -33,14 +33,11 @@ export const createOrganizationWithAdmin = async (orgData: {
   code?: string;
 }) => {
   const { data, error } = await supabase.rpc('create_organisation_with_admin', {
-    org_data: {
-      name: orgData.name,
-      code: orgData.code || 'ORG012025',
-      slug: orgData.name.toLowerCase().replace(/\s+/g, '-'),
-      email: orgData.adminEmail,
-      subscription_type: orgData.plan || 'free'
-    },
-    admin_email: orgData.adminEmail
+    name: orgData.name,
+    code: orgData.code || 'ORG012025',
+    email: orgData.adminEmail,
+    subscription_type: orgData.plan || 'free',
+    admin_name: orgData.adminName
   });
 
   return { data, error };
