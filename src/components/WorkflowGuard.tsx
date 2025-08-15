@@ -26,26 +26,28 @@ const WorkflowGuard: React.FC<WorkflowGuardProps> = ({ children }) => {
   const checkWorkflowState = async () => {
     try {
       console.log('🔍 WorkflowGuard: Début vérification workflow...');
-      
-      // 0. Vérification Super Admin (première priorité absolue)
-      console.log('🔍 Vérification table super_admins...');
-      const { count, error: countError } = await supabase.from('super_admins').select('*', { count: 'exact' });
-      console.log('📊 Résultat count super_admins:', { count, error: countError });
-      
+
+      // 1. Vérification Super Admin (PRIORITAIRE)
+      const { count, error: countError } = await supabase
+        .from('super_admins')
+        .select('*', { count: 'exact' });
+
       if (countError) {
         console.error('❌ Erreur lors de la vérification super_admins:', countError);
+        throw countError;
       }
-      
+
+      // Si pas de super admin, on force l'affichage du formulaire
       if (count === 0) {
-        console.log('❌ Aucun Super Admin trouvé, affichage modal super-admin');
+        console.log('❌ Aucun Super Admin - Affichage forcé du formulaire super-admin');
         setWorkflowState('needs-init');
         setInitStep('super-admin');
         setLoading(false);
-        return; // STOP ICI - pas de vérification auth nécessaire
+        return; // STOP ici - pas de vérification auth
       }
-      console.log('✅ Super Admin trouvé, count:', count);
 
-      // 1. Vérification de l'authentification (seulement après avoir un super admin)
+      // 2. Le reste des vérifications seulement si un super admin existe
+      console.log('✅ Super Admin existe, vérification auth...');
       const { data: { user } } = await supabase.auth.getUser();
 
       if (!user) {
@@ -127,9 +129,9 @@ const WorkflowGuard: React.FC<WorkflowGuardProps> = ({ children }) => {
 
     } catch (error) {
       console.error('❌ Erreur générale:', error);
-      // En cas d'erreur, on repart du début
+      // En cas d'erreur sur la vérification super_admin, on force aussi le formulaire
       setWorkflowState('needs-init');
-      setInitStep('pricing');
+      setInitStep('super-admin');
       setLoading(false);
     }
   };
@@ -187,6 +189,11 @@ const WorkflowGuard: React.FC<WorkflowGuardProps> = ({ children }) => {
   console.log('[WorkflowGuard Render] État actuel:', { workflowState, initStep, loading });
 
   // Rendu strict basé sur l'état
+  if (workflowState === 'needs-auth' && initStep !== 'super-admin') {
+    window.location.href = '/auth';
+    return null;
+  }
+
   if (workflowState === 'needs-init') {
     console.log('[WorkflowGuard] Affichage InitializationWizard avec step:', initStep);
     return (
@@ -197,11 +204,6 @@ const WorkflowGuard: React.FC<WorkflowGuardProps> = ({ children }) => {
         mode={initStep === 'super-admin' ? 'super-admin' : 'normal'}
       />
     );
-  }
-
-  if (workflowState === 'needs-auth') {
-    window.location.href = '/auth'; // Forcer la redirection complète
-    return null;
   }
 
   if (workflowState === 'completed' || workflowState === 'ready') {
