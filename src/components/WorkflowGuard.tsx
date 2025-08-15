@@ -9,7 +9,7 @@ interface WorkflowGuardProps {
   children: React.ReactNode;
 }
 
-type WorkflowState = 'loading' | 'needs-init' | 'needs-auth' | 'ready';
+type WorkflowState = 'loading' | 'needs-init' | 'needs-auth' | 'ready' | 'completed';
 type InitStep = 'pricing' | 'create-admin' | 'create-organization' | 'sms-validation' | 'garage-setup';
 type WorkflowStep = 'pricing' | 'create-admin' | 'create-organization' | 'sms-validation' | 'garage-setup' | 'complete' | 'ready'; // Ajoutez 'ready' aux options possibles;
 
@@ -24,60 +24,92 @@ const WorkflowGuard: React.FC<WorkflowGuardProps> = ({ children }) => {
   }, []);
 
   const checkWorkflowState = async () => {
-    console.log('[1] 🔍 Début vérification workflow');
-
     try {
-      // 1. Vérification de la session
-      const { data: { session }, error: authError } = await supabase.auth.getSession();
+      // 1. Vérification de l'authentification
+      const { data: { user } } = await supabase.auth.getUser();
 
-      if (authError) throw authError;
-      if (!session) {
+      if (!user) {
+        console.log('❌ Pas d\'utilisateur connecté');
         setWorkflowState('needs-auth');
+        setLoading(false);
         return;
       }
+      console.log('✅ Utilisateur connecté:', user.email);
 
-      // 2. Récupération du profil
-      const { data: profile, error: profileError } = await supabase
+      // 2. Vérification du profil admin
+      const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('id')
-        .eq('user_id', session.user.id)
+        .select('*')
+        .eq('id', user.id)
         .single();
 
-      if (profileError) throw profileError;
-
-      // 3. Vérification du workflow state
-      const { data: workflow, error: workflowError } = await supabase
-        .from('onboarding_workflow_states')
-        .select('current_step')
-        .eq('profile_id', profile.id)
-        .maybeSingle();
-
-      if (workflowError) throw workflowError;
-
-      // 4. Initialisation si nécessaire
-      if (!workflow) {
-        const { error } = await supabase
-          .from('onboarding_workflow_states')
-          .insert({
-            profile_id: profile.id,
-            current_step: 'pricing'
-          });
-
-        if (error) throw error;
+      if (profileError || !profileData) {
+        console.log('❌ Pas de profil admin, démarrage pricing');
         setWorkflowState('needs-init');
         setInitStep('pricing');
+        setLoading(false);
         return;
       }
+      console.log('✅ Profil admin trouvé');
 
-      // 5. Gestion des états
-      setWorkflowState(workflow.current_step === 'complete' ? 'ready' : 'needs-init');
-      setInitStep(workflow.current_step);
+      // 3. Vérification de l'organisation
+      const { data: orgData, error: orgError } = await supabase
+        .from('user_organizations')
+        .select('organisation_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (orgError || !orgData) {
+        console.log('❌ Pas d\'organisation, démarrage create-organization');
+        setWorkflowState('needs-init');
+        setInitStep('create-organization');
+        setLoading(false);
+        return;
+      }
+      console.log('✅ Organisation trouvée');
+
+      // 4. Vérification de la validation SMS
+      const { data: smsData, error: smsError } = await supabase
+        .from('sms_validations')
+        .select('is_validated')
+        .eq('user_id', user.id)
+        .single();
+
+      if (smsError || !smsData || !smsData.is_validated) {
+        console.log('❌ SMS non validé, démarrage sms-validation');
+        setWorkflowState('needs-init');
+        setInitStep('sms-validation');
+        setLoading(false);
+        return;
+      }
+      console.log('✅ SMS validé');
+
+      // 5. Vérification du garage setup
+      const { data: garageData, error: garageError } = await supabase
+        .from('garages')
+        .select('is_configured')
+        .eq('organisation_id', orgData.organisation_id)
+        .single();
+
+      if (garageError || !garageData || !garageData.is_configured) {
+        console.log('❌ Garage non configuré, démarrage garage-setup');
+        setWorkflowState('needs-init');
+        setInitStep('garage-setup');
+        setLoading(false);
+        return;
+      }
+      console.log('✅ Garage configuré');
+
+      // 6. Tout est OK, workflow complet
+      console.log('✅ Workflow complet, accès au dashboard');
+      setWorkflowState('completed');
+      setLoading(false);
 
     } catch (error) {
-      console.error('Erreur workflow:', error);
+      console.error('❌ Erreur générale:', error);
+      // En cas d'erreur, on repart du début
       setWorkflowState('needs-init');
       setInitStep('pricing');
-    } finally {
       setLoading(false);
     }
   };
@@ -119,7 +151,10 @@ const WorkflowGuard: React.FC<WorkflowGuardProps> = ({ children }) => {
 
   // État de chargement
   if (loading) {
-    return <SplashScreen onComplete={() => setLoading(false)} />;
+    return <SplashScreen onComplete={() => {
+      setLoading(false);
+      // Ne pas rappeler checkWorkflowState ici
+    }} />;
   }
 
   // Log pour debug
@@ -141,7 +176,7 @@ const WorkflowGuard: React.FC<WorkflowGuardProps> = ({ children }) => {
     return null;
   }
 
-  if (workflowState === 'ready') {
+  if (workflowState === 'completed' || workflowState === 'ready') {
     return <>{children}</>;
   }
 

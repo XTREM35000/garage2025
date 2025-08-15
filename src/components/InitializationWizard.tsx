@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Building2, User, Mail, Key, Phone, Eye, EyeOff } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface InitializationWizardProps {
   isOpen: boolean;
@@ -41,6 +42,27 @@ interface OrganizationData {
   selectedPlan: string;
 }
 
+const completeInitialization = async () => {
+  const { error } = await supabase
+    .from('onboarding_workflow_states')
+    .update({
+      is_completed: true,
+      completed_at: new Date().toISOString(),
+      current_step: 'completed'
+    })
+    .eq('user_id', (await supabase.auth.getUser()).data.user?.id);
+
+  if (error) throw error;
+};
+
+const notifySuccess = (message: string) => {
+  toast.success(message);
+};
+
+const notifyError = (message: string) => {
+  toast.error(message);
+};
+
 const InitializationWizard: React.FC<InitializationWizardProps> = ({
   isOpen,
   onComplete,
@@ -62,6 +84,9 @@ const InitializationWizard: React.FC<InitializationWizardProps> = ({
     slug: '',
     selectedPlan: ''
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const navigate = useNavigate();
 
   // Gestion du Super-Admin
   const handleSuperAdminCreated = () => {
@@ -205,68 +230,44 @@ const InitializationWizard: React.FC<InitializationWizardProps> = ({
     setIsLoading(true);
 
     try {
-      const orgCode = generateOrgCode();
       const { data: { user } } = await supabase.auth.getUser();
-
       if (!user) throw new Error('User not authenticated');
 
       // 1. Création de l'organisation
       const { data, error } = await supabase.rpc('create_organisation_with_admin', {
         org_name: organizationData.name,
         org_subscription_plan: organizationData.selectedPlan,
-        org_code: orgCode,
+        org_code: generateOrgCode(),
         is_demo: true,
         admin_id: user.id
       });
 
       if (error) throw error;
 
-      console.log('✅ Réponse création organisation:', data);
-
       if (!data.organisation_id) {
         throw new Error('ID organisation manquant dans la réponse');
       }
 
-      // 2. Mise à jour du profil utilisateur
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .upsert({
-          id: user.id,
-          organisation_id: data.organisation_id,
-          role: 'admin'
-        });
+      // 2. Mettre à jour le workflow state avant le profil
+      await supabase.from('onboarding_workflow_states').upsert({
+        user_id: user.id,
+        organisation_id: data.organisation_id,
+        current_step: 'sms-validation',
+        updated_at: new Date().toISOString()
+      });
 
-      if (profileError) {
-        console.warn('⚠️ Avertissement profil:', profileError);
-      }
+      // 3. Mise à jour du profil utilisateur en dernier
+      await supabase.from('profiles').update({
+        organisation_id: data.organisation_id,
+        role: 'admin'
+      }).eq('id', user.id);
 
-      // 3. Mise à jour du workflow state
-      const { error: workflowError } = await supabase
-        .from('onboarding_workflow_states')
-        .upsert({
-          user_id: user.id,
-          organisation_id: data.organisation_id,
-          current_step: 'sms-validation', // Étape suivante
-          updated_at: new Date().toISOString()
-        }, {
-          onConflict: 'user_id' // Mise à jour si l'entrée existe déjà
-        });
-
-      if (workflowError) {
-        console.warn('⚠️ Erreur mise à jour workflow:', workflowError);
-      }
-
-      // 4. Nettoyage UI et transition
-      toast.dismiss();
+      // 4. UI updates
       toast.success('Organisation créée avec succès!');
-
-      // 5. Passage à l'étape suivante
       setCurrentStep('sms-validation');
-
-      // 6. Mise à jour locale des données
       setOrganizationData(prev => ({
         ...prev,
-        code: data.code || orgCode,
+        code: data.code || generateOrgCode(),
         id: data.organisation_id
       }));
 
@@ -310,6 +311,26 @@ const InitializationWizard: React.FC<InitializationWizardProps> = ({
   const handleSmsRefuse = () => {
     // Si refus, on peut tout de même continuer ou revenir en arrière. On continue pour ne pas bloquer.
     setCurrentStep('garage-setup');
+  };
+
+  // Gestion de la finalisation
+  const handleFinish = async () => {
+    setIsSubmitting(true);
+    try {
+      await completeInitialization();
+
+      // Attendre que la mise à jour soit terminée
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Forcer un rechargement de la page pour réinitialiser l'état
+      window.location.href = '/organizations/select';
+
+      notifySuccess('Installation terminée avec succès');
+    } catch (error) {
+      notifyError("Erreur lors de la finalisation de l'installation");
+      console.error(error);
+    }
+    setIsSubmitting(false);
   };
 
 
