@@ -12,12 +12,14 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Building2, User, Mail, Key, Phone, Eye, EyeOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import SuperAdminSetupModal from '@/components/SuperAdminSetupModal';
+
 
 interface InitializationWizardProps {
   isOpen: boolean;
   onComplete: () => void;
   startStep: 'pricing' | 'create-admin' | 'super-admin';
-  mode?: 'super-admin' | 'normal';
+  mode?: 'super-admin' | 'normal'
 }
 
 type WizardStep =
@@ -110,7 +112,7 @@ const InitializationWizard: React.FC<InitializationWizardProps> = ({
   const handleAdminSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     console.log('🚀 Début création admin/super-admin, mode:', mode, 'currentStep:', currentStep);
 
     try {
@@ -380,6 +382,7 @@ const InitializationWizard: React.FC<InitializationWizardProps> = ({
 
 
   // Rendu selon l'étape
+  // Rendu selon l'étape
   switch (currentStep) {
     case 'pricing':
       return (
@@ -390,128 +393,33 @@ const InitializationWizard: React.FC<InitializationWizardProps> = ({
       );
 
     case 'super-admin':
-    case 'create-admin':
-      const isSuper = currentStep === 'super-admin' || mode === 'super-admin';
-      const title = isSuper ? "Création Super Admin (Accès complet)" : "Création du Compte Administrateur";
-      const description = isSuper 
-        ? "Créez le premier Super Admin qui aura accès à toutes les organisations."
-        : "Créez le compte administrateur principal qui gérera votre organisation.";
       return (
-        <Dialog open={isOpen} onOpenChange={() => { }}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="text-center text-2xl font-bold flex items-center justify-center gap-2">
-                <User className="h-6 w-6 text-primary" />
-                {title}
-              </DialogTitle>
-              <DialogDescription className="text-center">
-                {description}
-              </DialogDescription>
-            </DialogHeader>
+        <SuperAdminSetupModal
+          isOpen={isOpen}
+          onComplete={handleSuperAdminCreated}
+          isSuperAdminMode={true}
+          adminData={adminData}
+          onAdminDataChange={handleAdminInputChange}
+          showPassword={showPassword}
+          onToggleShowPassword={() => setShowPassword(!showPassword)}
+          isLoading={isLoading}
+          selectedPlan={organizationData.selectedPlan}
+        />
+      );
 
-            <form onSubmit={handleAdminSubmit} className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <User className="h-5 w-5" />
-                    Informations de l'administrateur
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <Label htmlFor="adminName">Nom complet *</Label>
-                    <Input
-                      id="adminName"
-                      value={adminData.name}
-                      onChange={(e) => handleAdminInputChange('name', e.target.value)}
-                      placeholder="Jean Kouassi"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="adminEmail" className="flex items-center gap-2">
-                      <Mail className="h-4 w-4" />
-                      Email administrateur *
-                    </Label>
-                    <Input
-                      id="adminEmail"
-                      type="email"
-                      value={adminData.email}
-                      onChange={(e) => handleAdminInputChange('email', e.target.value)}
-                      placeholder="admin@garagecentral.ci"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="adminPhone" className="flex items-center gap-2">
-                      <Phone className="h-4 w-4" />
-                      Téléphone *
-                    </Label>
-                    <Input
-                      id="adminPhone"
-                      type="tel"
-                      value={adminData.phone}
-                      onChange={(e) => handleAdminInputChange('phone', e.target.value)}
-                      placeholder="+225 07 XX XX XX XX"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="adminPassword" className="flex items-center gap-2">
-                      <Key className="h-4 w-4" />
-                      Mot de passe *
-                    </Label>
-                    <div className="relative">
-                      <Input
-                        id="adminPassword"
-                        type={showPassword ? "text" : "password"}
-                        value={adminData.password}
-                        onChange={(e) => handleAdminInputChange('password', e.target.value)}
-                        placeholder="Mot de passe sécurisé"
-                        required
-                        minLength={6}
-                        className="pr-10"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
-                      >
-                        {showPassword ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
-                <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">
-                  Prochaines étapes
-                </h4>
-                <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
-                  <li>• Votre compte administrateur sera créé</li>
-                  <li>• Vous pourrez ensuite créer votre organisation</li>
-                  <li>• Plan sélectionné: <span className="font-semibold">{organizationData.selectedPlan}</span></li>
-                </ul>
-              </div>
-
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={isLoading || !adminData.name || !adminData.email || !adminData.password || !adminData.phone}
-              >
-                {isLoading ? 'Création en cours...' : 'Créer le compte administrateur'}
-              </Button>
-            </form>
-          </DialogContent>
-        </Dialog>
+    case 'create-admin':
+      return (
+        <SuperAdminSetupModal
+          isOpen={isOpen}
+          onComplete={() => setCurrentStep('create-organization')}
+          isSuperAdminMode={false}
+          adminData={adminData}
+          onAdminDataChange={handleAdminInputChange}
+          showPassword={showPassword}
+          onToggleShowPassword={() => setShowPassword(!showPassword)}
+          isLoading={isLoading}
+          selectedPlan={organizationData.selectedPlan}
+        />
       );
 
     case 'create-organization':
@@ -588,8 +496,6 @@ const InitializationWizard: React.FC<InitializationWizardProps> = ({
           </DialogContent>
         </Dialog>
       );
-
-
 
     case 'sms-validation':
       return (

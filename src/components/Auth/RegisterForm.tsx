@@ -17,16 +17,15 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ setTab }) => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    confirmPassword: '',
     firstName: '',
     lastName: ''
+    // Suppression de confirmPassword
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [selectedRole, setSelectedRole] = useState('');
 
   const roles = [
@@ -44,13 +43,9 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ setTab }) => {
     setError('');
 
     try {
-      // 1. Validation des données
+      // 1. Validation des données - Suppression de la vérification du confirmPassword
       if (!formData.email || !formData.firstName || !formData.lastName || !formData.password) {
         throw new Error('Tous les champs obligatoires doivent être remplis');
-      }
-
-      if (formData.password !== formData.confirmPassword) {
-        throw new Error('Les mots de passe ne correspondent pas');
       }
 
       if (!selectedRole) {
@@ -276,15 +271,18 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ setTab }) => {
         </select>
       </div>
 
+      {/* Modification du champ mot de passe - Suppression du champ de confirmation */}
       <div className="space-y-2">
-        <Label htmlFor="password">Mot de passe *</Label>
+        <Label htmlFor="password">Mot de passe</Label>
         <div className="relative">
+          <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
           <Input
             id="password"
             type={showPassword ? "text" : "password"}
             value={formData.password}
             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-            placeholder="Mot de passe"
+            className="pl-10"
+            placeholder="Minimum 8 caractères"
             required
           />
           <button
@@ -295,27 +293,9 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ setTab }) => {
             {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </button>
         </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="confirmPassword">Confirmer le mot de passe *</Label>
-        <div className="relative">
-          <Input
-            id="confirmPassword"
-            type={showConfirmPassword ? "text" : "password"}
-            value={formData.confirmPassword}
-            onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-            placeholder="Confirmer le mot de passe"
-            required
-          />
-          <button
-            type="button"
-            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-          >
-            {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-          </button>
-        </div>
+        <span className="text-xs text-muted-foreground">
+          8 caractères minimum, incluant lettres et chiffres
+        </span>
       </div>
 
       <Button
