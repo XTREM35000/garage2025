@@ -49,6 +49,8 @@ const WorkflowGuard: React.FC<WorkflowGuardProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [userOrganization, setUserOrganization] = useState<UserOrganization | null>(null);
+  const [hasSuperAdmin, setHasSuperAdmin] = useState<boolean | null>(null);
+  const [currentWorkflowData, setCurrentWorkflowData] = useState<any>(null);
   const navigate = useNavigate();
 
   // Fonction pour mettre à jour l'étape du workflow
@@ -143,74 +145,118 @@ const WorkflowGuard: React.FC<WorkflowGuardProps> = ({ children }) => {
     }
   };
 
+  // Fonction pour vérifier s'il y a un super admin existant
+  const checkSuperAdminExists = async (): Promise<boolean> => {
+    try {
+      const { count, error } = await supabase
+        .from('super_admins')
+        .select('*', { count: 'exact' });
+
+      if (error) {
+        console.error('❌ Erreur vérification super admin:', error);
+        return false;
+      }
+
+      const exists = (count || 0) > 0;
+      setHasSuperAdmin(exists);
+      console.log('👑 Super admin existe:', exists, 'Nombre:', count);
+      return exists;
+    } catch (error) {
+      console.error('❌ Erreur vérification super admin:', error);
+      return false;
+    }
+  };
+
+  // Fonction pour vérifier l'état du workflow en cours
+  const checkCurrentWorkflowState = async () => {
+    try {
+      // Vérifier s'il y a des données de workflow existantes
+      const { data: workflowData, error } = await supabase
+        .from('onboarding_workflow_states')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('❌ Erreur récupération workflow:', error);
+        return null;
+      }
+
+      if (workflowData && workflowData.length > 0) {
+        setCurrentWorkflowData(workflowData[0]);
+        return workflowData[0];
+      }
+
+      return null;
+    } catch (error) {
+      console.error('❌ Erreur vérification workflow existant:', error);
+      return null;
+    }
+  };
+
   // Fonction principale de vérification du workflow
   const checkWorkflowState = async () => {
     try {
       setLoading(true);
       console.log('🔍 Vérification du workflow...');
 
-      // 1. Récupérer l'utilisateur connecté
-      const { data: { user } } = await supabase.auth.getUser();
+      // 1. Vérifier d'abord s'il y a un super admin existant
+      const superAdminExists = await checkSuperAdminExists();
 
-      if (!user) {
-        console.log('⚠️ Aucun utilisateur connecté');
-        setWorkflowState('needs-auth');
-        setLoading(false);
-        return;
-      }
+      // 2. Vérifier l'état du workflow en cours
+      const currentWorkflow = await checkCurrentWorkflowState();
 
-      // 2. Vérifier le profil et l'organisation de l'utilisateur
-      const userAccess = await checkUserAccess(user.id);
-
-      // 3. Si l'utilisateur a un profil avec le rôle "admin" et le status "tenant"
-      if (userAccess?.profile?.role === 'admin' && userAccess?.organization?.status === 'tenant') {
-        console.log('✅ Utilisateur Admin/Tenant détecté -> Accès au dashboard');
-        setWorkflowState('ready');
-        setLoading(false);
-        return;
-      }
-
-      // 4. Vérifier si un super admin existe
-      const { count: superAdminCount } = await supabase
-        .from('super_admins')
-        .select('*', { count: 'exact' });
-
-      console.log('👑 Nombre de super admins:', superAdminCount);
-
-      // 5. Si pas de super admin, commencer par là
-      if (superAdminCount === 0) {
-        console.log('⚠️ Pas de super admin -> Étape SUPER_ADMIN');
+      // 3. Si pas de super admin, commencer par là
+      if (!superAdminExists) {
+        console.log('⚠️ Pas de super admin -> Étape SUPER_ADMIN (initialisation)');
         setInitStep(WORKFLOW_STEPS.SUPER_ADMIN);
         setWorkflowState('needs-init');
         setLoading(false);
         return;
       }
 
-      // 6. Vérifier l'état du workflow pour cet utilisateur
-      const { data: workflowData } = await supabase
-        .from('onboarding_workflow_states')
-        .select('current_step, organisation_id')
-        .eq('user_id', user.id)
-        .single();
+      // 4. Si super admin existe, vérifier l'étape suivante
+      if (currentWorkflow) {
+        console.log('📋 Workflow en cours détecté:', currentWorkflow.current_step);
 
-      let nextStep: ExtendedInitializationStep;
+        // Déterminer l'étape suivante basée sur l'étape actuelle
+        let nextStep: ExtendedInitializationStep;
 
-      // 7. Déterminer l'étape suivante
-      if (!workflowData) {
-        // Nouveau workflow -> commencer par PRICING
-        console.log('🆕 Nouveau workflow -> PRICING');
-        nextStep = WORKFLOW_STEPS.PRICING;
-      } else if (workflowData.current_step === WORKFLOW_STEPS.PRICING) {
-        // Après pricing -> CREATE_ADMIN
-        console.log('💰 Plan choisi -> CREATE_ADMIN');
-        nextStep = WORKFLOW_STEPS.CREATE_ADMIN;
-      } else {
-        // Garder l'étape en cours
-        nextStep = workflowData.current_step as ExtendedInitializationStep;
+        switch (currentWorkflow.current_step) {
+          case WORKFLOW_STEPS.SUPER_ADMIN:
+            nextStep = WORKFLOW_STEPS.PRICING;
+            break;
+          case WORKFLOW_STEPS.PRICING:
+            nextStep = WORKFLOW_STEPS.CREATE_ADMIN;
+            break;
+          case WORKFLOW_STEPS.CREATE_ADMIN:
+            // Après création admin, on doit se connecter
+            nextStep = WORKFLOW_STEPS.CREATE_ADMIN;
+            break;
+          case WORKFLOW_STEPS.CREATE_ORGANIZATION:
+            nextStep = WORKFLOW_STEPS.SMS_VALIDATION;
+            break;
+          case WORKFLOW_STEPS.SMS_VALIDATION:
+            nextStep = WORKFLOW_STEPS.GARAGE_SETUP;
+            break;
+          case WORKFLOW_STEPS.GARAGE_SETUP:
+            setWorkflowState('completed');
+            setLoading(false);
+            return;
+          default:
+            nextStep = WORKFLOW_STEPS.PRICING;
+        }
+
+        console.log('🔄 Étape suivante déterminée:', nextStep);
+        setInitStep(nextStep);
+        setWorkflowState('needs-init');
+        setLoading(false);
+        return;
       }
 
-      console.log('✅ Étape déterminée:', nextStep);
-      setInitStep(nextStep);
+      // 5. Si pas de workflow en cours mais super admin existe, commencer par pricing
+      console.log('🆕 Super admin existe mais pas de workflow -> PRICING');
+      setInitStep(WORKFLOW_STEPS.PRICING);
       setWorkflowState('needs-init');
 
     } catch (error) {
@@ -226,52 +272,47 @@ const WorkflowGuard: React.FC<WorkflowGuardProps> = ({ children }) => {
     try {
       console.log('🎯 Étape terminée:', completedStep);
 
-      if (completedStep === WORKFLOW_STEPS.GARAGE_SETUP) {
-        // Après setup garage, on passe à complete
-        setWorkflowState('completed');
-        return;
-      }
-
-      // Force la progression après pricing vers CREATE_ADMIN
-      if (completedStep === WORKFLOW_STEPS.PRICING) {
-        console.log('🔄 Force progression vers CREATE_ADMIN');
-        const nextStep = WORKFLOW_STEPS.CREATE_ADMIN;
-
-        // Tenter de mettre à jour en base si possible
-        try {
-          const { data: { user } } = await supabase.auth.getUser();
-          if (user) {
-            await updateWorkflowStep(user.id, nextStep);
-          }
-        } catch (error) {
-          console.warn('⚠️ Pas d\'utilisateur, continue quand même');
-        }
-
-        // Force l'étape suivante même sans user
-        setInitStep(nextStep);
-        setWorkflowState('needs-init');
-        return;
-      }
-
-      // Pour les autres étapes, on garde la vérification utilisateur
-      const { data: { user } } = await supabase.auth.getUser();
-
       // Déterminer la prochaine étape
-      const currentIndex = WORKFLOW_SEQUENCE.indexOf(completedStep as ExtendedInitializationStep);
-      let nextStep: WorkflowStep = 'complete';
+      let nextStep: WorkflowStep;
+      let needsAuth = false;
 
-      if (currentIndex < WORKFLOW_SEQUENCE.length - 1) {
-        nextStep = WORKFLOW_SEQUENCE[currentIndex + 1];
+      switch (completedStep) {
+        case WORKFLOW_STEPS.SUPER_ADMIN:
+          nextStep = WORKFLOW_STEPS.PRICING;
+          break;
+        case WORKFLOW_STEPS.PRICING:
+          nextStep = WORKFLOW_STEPS.CREATE_ADMIN;
+          break;
+        case WORKFLOW_STEPS.CREATE_ADMIN:
+          // Après création admin, on doit se connecter
+          needsAuth = true;
+          nextStep = WORKFLOW_STEPS.CREATE_ORGANIZATION;
+          break;
+        case WORKFLOW_STEPS.CREATE_ORGANIZATION:
+          nextStep = WORKFLOW_STEPS.SMS_VALIDATION;
+          break;
+        case WORKFLOW_STEPS.SMS_VALIDATION:
+          nextStep = WORKFLOW_STEPS.GARAGE_SETUP;
+          break;
+        case WORKFLOW_STEPS.GARAGE_SETUP:
+          setWorkflowState('completed');
+          return;
+        default:
+          nextStep = 'complete';
       }
 
-      // Mise à jour si possible
-      if (user) {
-        await updateWorkflowStep(user.id, nextStep);
+      if (needsAuth) {
+        console.log('🔐 Authentification requise après création admin');
+        setWorkflowState('needs-auth');
+        // Rediriger vers login
+        navigate('/login');
+        return;
       }
 
       if (nextStep === 'complete') {
         setWorkflowState('completed');
       } else {
+        console.log('🔄 Passage à l\'étape suivante:', nextStep);
         setInitStep(nextStep as ExtendedInitializationStep);
         setWorkflowState('needs-init');
       }
@@ -288,11 +329,11 @@ const WorkflowGuard: React.FC<WorkflowGuardProps> = ({ children }) => {
         console.log('🔄 État auth:', event, session?.user?.email);
 
         if (event === 'SIGNED_IN') {
+          // Re-vérifier le workflow quand un utilisateur se connecte
           checkWorkflowState();
         } else if (event === 'SIGNED_OUT') {
           setWorkflowState('needs-auth');
           setUserProfile(null);
-          setUserOrganization(null);
           navigate('/login');
         }
       }
@@ -348,7 +389,7 @@ const WorkflowGuard: React.FC<WorkflowGuardProps> = ({ children }) => {
       console.log('🎯 Affichage du dashboard Admin/Tenant');
       return children;
     }
-    
+
     // Sinon, continuer avec l'initialisation
     console.log('🔄 Redémarrage de l\'initialisation');
     setWorkflowState('needs-init');

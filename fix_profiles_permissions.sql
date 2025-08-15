@@ -6,19 +6,15 @@ DROP POLICY IF EXISTS "Users can insert own profile" ON profiles;
 CREATE POLICY "Users can insert own profile" ON profiles
     FOR INSERT WITH CHECK (auth.uid() = id);
 
--- 2. Ajouter la politique INSERT pour permettre aux admins de créer des profils
-DROP POLICY IF EXISTS "Admins can insert profiles" ON profiles;
-CREATE POLICY "Admins can insert profiles" ON profiles
-    FOR INSERT WITH CHECK (
-        get_user_role() IN ('proprietaire', 'chef-garagiste', 'superadmin')
-    );
+-- 2. Ajouter la politique INSERT pour permettre aux utilisateurs authentifiés de créer des profils
+DROP POLICY IF EXISTS "Authenticated users can insert profiles" ON profiles;
+CREATE POLICY "Authenticated users can insert profiles" ON profiles
+    FOR INSERT WITH CHECK (auth.role() = 'authenticated');
 
--- 3. Ajouter la politique DELETE pour permettre aux admins de supprimer des profils
-DROP POLICY IF EXISTS "Admins can delete profiles" ON profiles;
-CREATE POLICY "Admins can delete profiles" ON profiles
-    FOR DELETE USING (
-        get_user_role() IN ('proprietaire', 'chef-garagiste', 'superadmin')
-    );
+-- 3. Ajouter la politique DELETE pour permettre aux utilisateurs de supprimer leur propre profil
+DROP POLICY IF EXISTS "Users can delete own profile" ON profiles;
+CREATE POLICY "Users can delete own profile" ON profiles
+    FOR DELETE USING (auth.uid() = id);
 
 -- 4. Créer la fonction pour créer des profils en contournant RLS
 CREATE OR REPLACE FUNCTION public.create_profile_bypass_rls(
@@ -116,5 +112,33 @@ CREATE POLICY "super_admins_initial_setup"
         (auth.role() = 'authenticated' AND (SELECT COUNT(*) FROM super_admins) = 0)
     );
 
--- 9. Afficher un message de confirmation
+-- 9. Ajouter une politique de lecture pour super_admins
+DROP POLICY IF EXISTS "super_admins_read_access" ON super_admins;
+CREATE POLICY "super_admins_read_access"
+    ON super_admins
+    FOR SELECT
+    USING (
+        -- Permettre la lecture pour tous les utilisateurs authentifiés
+        auth.role() = 'authenticated'
+    );
+
+-- 10. Ajouter une politique de mise à jour pour super_admins
+DROP POLICY IF EXISTS "super_admins_update_access" ON super_admins;
+CREATE POLICY "super_admins_update_access"
+    ON super_admins
+    FOR UPDATE
+    USING (
+        -- Permettre la mise à jour pour les super-admins existants
+        EXISTS (
+            SELECT 1 FROM super_admins 
+            WHERE user_id = auth.uid()
+        )
+    );
+
+-- 11. S'assurer que RLS est activé sur toutes les tables
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE super_admins ENABLE ROW LEVEL SECURITY;
+ALTER TABLE onboarding_workflow_states ENABLE ROW LEVEL SECURITY;
+
+-- 12. Afficher un message de confirmation
 SELECT 'Permissions de création de profils, workflow et super-admin corrigées avec succès!' as message;
