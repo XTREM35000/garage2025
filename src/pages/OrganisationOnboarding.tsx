@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { OrganisationOnboarding as OnboardingModal } from '@/components/OrganisationOnboarding';
+import OrganisationOnboarding from '@/components/OrganisationOnboarding';
 import { useNavigate } from 'react-router-dom';
 
 const OrganisationOnboardingPage: React.FC = () => {
@@ -14,7 +14,7 @@ const OrganisationOnboardingPage: React.FC = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
-      <OnboardingModal isOpen={open} onComplete={handleComplete} />
+      <OrganisationOnboarding onComplete={handleComplete} plan="starter" />
     </div>
   );
 };

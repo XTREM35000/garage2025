@@ -10,7 +10,7 @@ interface WorkflowGuardProps {
 }
 
 type WorkflowState = 'loading' | 'needs-init' | 'needs-auth' | 'ready' | 'completed';
-type InitStep = 'pricing' | 'create-admin' | 'create-organization' | 'sms-validation' | 'garage-setup';
+type InitStep = 'super-admin' | 'pricing' | 'create-admin' | 'create-organization' | 'sms-validation' | 'garage-setup';
 type WorkflowStep = 'pricing' | 'create-admin' | 'create-organization' | 'sms-validation' | 'garage-setup' | 'complete' | 'ready'; // Ajoutez 'ready' aux options possibles;
 
 const WorkflowGuard: React.FC<WorkflowGuardProps> = ({ children }) => {
@@ -25,6 +25,17 @@ const WorkflowGuard: React.FC<WorkflowGuardProps> = ({ children }) => {
 
   const checkWorkflowState = async () => {
     try {
+      // 0. Vérification Super Admin (première priorité)
+      const { count } = await supabase.from('super_admins').select('*', { count: 'exact' });
+      if (count === 0) {
+        console.log('❌ Aucun Super Admin, démarrage super-admin');
+        setWorkflowState('needs-init');
+        setInitStep('super-admin');
+        setLoading(false);
+        return;
+      }
+      console.log('✅ Super Admin trouvé');
+
       // 1. Vérification de l'authentification
       const { data: { user } } = await supabase.auth.getUser();
 
@@ -166,7 +177,8 @@ const WorkflowGuard: React.FC<WorkflowGuardProps> = ({ children }) => {
       <InitializationWizard
         isOpen={true}
         onComplete={handleInitComplete}
-        startStep={initStep as 'pricing' | 'create-admin'}
+        startStep={initStep as 'pricing' | 'create-admin' | 'super-admin'}
+        mode={initStep === 'super-admin' ? 'super-admin' : 'normal'}
       />
     );
   }

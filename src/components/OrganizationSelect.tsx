@@ -54,9 +54,9 @@ const OrganizationSelect: React.FC<OrganizationSelectProps> = ({ onSelect }) => 
 
       try {
         const result = await getAvailableOrganizations();
-        orgs = result.organizations || [];
-        isSuper = result.isSuperAdmin || false;
-        fetchError = result.error;
+        orgs = result?.data || [];
+        isSuper = false;
+        fetchError = result?.error;
       } catch (error) {
         console.error('❌ Erreur getAvailableOrganizations:', error);
         fetchError = error.message;

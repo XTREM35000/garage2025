@@ -16,10 +16,12 @@ import { useNavigate } from 'react-router-dom';
 interface InitializationWizardProps {
   isOpen: boolean;
   onComplete: () => void;
-  startStep: 'pricing' | 'create-admin';
+  startStep: 'pricing' | 'create-admin' | 'super-admin';
+  mode?: 'super-admin' | 'normal';
 }
 
 type WizardStep =
+  | 'super-admin'
   | 'pricing'
   | 'create-admin'
   | 'create-organization'
@@ -66,9 +68,10 @@ const notifyError = (message: string) => {
 const InitializationWizard: React.FC<InitializationWizardProps> = ({
   isOpen,
   onComplete,
-  startStep
+  startStep,
+  mode = 'normal'
 }) => {
-  const [currentStep, setCurrentStep] = useState<WizardStep>(startStep);
+  const [currentStep, setCurrentStep] = useState<WizardStep>(startStep === 'super-admin' ? 'super-admin' : startStep);
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [adminData, setAdminData] = useState<AdminData>({
@@ -109,6 +112,45 @@ const InitializationWizard: React.FC<InitializationWizardProps> = ({
     setIsLoading(true);
 
     try {
+      // Traitement spécial pour Super Admin
+      if (mode === 'super-admin') {
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+          email: adminData.email,
+          password: adminData.password,
+          options: {
+            data: {
+              full_name: adminData.name,
+              phone: adminData.phone
+            }
+          }
+        });
+
+        if (signUpError || !signUpData.user) {
+          throw new Error(signUpError?.message || 'Échec création du compte');
+        }
+
+        // Créer profil
+        await supabase.from('profiles').upsert({
+          id: signUpData.user.id,
+          email: adminData.email,
+          full_name: adminData.name,
+          phone: adminData.phone,
+          role: 'admin'
+        });
+
+        // Créer Super Admin
+        await supabase.from('super_admins').insert({
+          user_id: signUpData.user.id,
+          email: adminData.email,
+          nom: adminData.name.split(' ')[1] || '',
+          prenom: adminData.name.split(' ')[0] || '',
+          phone: adminData.phone
+        });
+
+        toast.success('Super Admin créé avec succès!');
+        onComplete();
+        return;
+      }
       // 1. Vérifier si l'utilisateur existe
       const { data: { user: existingUser }, error: getUserError } = await supabase.auth.getUser();
 
@@ -344,17 +386,23 @@ const InitializationWizard: React.FC<InitializationWizardProps> = ({
         />
       );
 
+    case 'super-admin':
     case 'create-admin':
+      const isSuper = currentStep === 'super-admin' || mode === 'super-admin';
+      const title = isSuper ? "Création Super Admin (Accès complet)" : "Création du Compte Administrateur";
+      const description = isSuper 
+        ? "Créez le premier Super Admin qui aura accès à toutes les organisations."
+        : "Créez le compte administrateur principal qui gérera votre organisation.";
       return (
         <Dialog open={isOpen} onOpenChange={() => { }}>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="text-center text-2xl font-bold flex items-center justify-center gap-2">
                 <User className="h-6 w-6 text-primary" />
-                Création du Compte Administrateur
+                {title}
               </DialogTitle>
               <DialogDescription className="text-center">
-                Créez le compte administrateur principal qui gérera votre organisation.
+                {description}
               </DialogDescription>
             </DialogHeader>
 
