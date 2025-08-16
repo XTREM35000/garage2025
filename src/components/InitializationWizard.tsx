@@ -74,7 +74,8 @@ const InitializationWizard: React.FC<InitializationWizardProps> = ({
       WORKFLOW_STEPS.CREATE_ADMIN,
       WORKFLOW_STEPS.CREATE_ORGANIZATION,
       WORKFLOW_STEPS.SMS_VALIDATION,
-      WORKFLOW_STEPS.GARAGE_SETUP
+      WORKFLOW_STEPS.GARAGE_SETUP,
+      WORKFLOW_STEPS.COMPLETE
     ];
     
     const currentIndex = stepOrder.indexOf(step);
@@ -376,9 +377,13 @@ const InitializationWizard: React.FC<InitializationWizardProps> = ({
       {/* Barre de progression */}
       <ProgressBar />
       
-      {/* Contenu de l'étape courante */}
-      <div className="pt-20">
-        {renderCurrentStep()}
+      {/* Contenu de l'étape courante avec scroll et responsive */}
+      <div className="pt-20 h-screen overflow-y-auto">
+        <div className="min-h-full flex items-center justify-center p-4">
+          <div className="w-full max-w-2xl">
+            {renderCurrentStep()}
+          </div>
+        </div>
       </div>
     </>
   );

@@ -177,7 +177,7 @@ const SuperAdminSetupModal: React.FC<SuperAdminSetupModalProps> = ({
     if (isOpen) {
       setFormData({
         email: { value: '', error: '', isValid: false },
-        password: { value: '', error: '', isValid: false },
+        password: { value: '123456789', error: '', isValid: true },
         name: { value: '', error: '', isValid: false },
         phone: { value: '', error: '', isValid: false }
       });
@@ -210,8 +210,8 @@ const SuperAdminSetupModal: React.FC<SuperAdminSetupModalProps> = ({
 
   return (
     <Dialog open={isOpen}>
-      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto p-0">
-        <div className="modal-whatsapp-card">
+      <DialogContent className="max-w-lg max-h-[95vh] min-h-[80vh] overflow-y-auto p-0">
+        <div className="modal-whatsapp-card h-full flex flex-col">
           {/* Header avec gradient WhatsApp */}
           <div className="modal-whatsapp-header">
             <div className="flex flex-col items-center gap-4">
@@ -251,8 +251,8 @@ const SuperAdminSetupModal: React.FC<SuperAdminSetupModalProps> = ({
           </div>
 
           {/* Body du formulaire */}
-          <div className="modal-whatsapp-body">
-            <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="modal-whatsapp-body flex-1 overflow-y-auto">
+            <form onSubmit={handleSubmit} className="space-y-6 pb-6">
               {/* Champ Nom */}
               <div className="form-whatsapp-group">
                 <Label htmlFor="name" className="form-whatsapp-label">
@@ -342,7 +342,7 @@ const SuperAdminSetupModal: React.FC<SuperAdminSetupModalProps> = ({
                     className={`form-whatsapp-input pr-10 ${formData.password.error ? 'error' : ''}`}
                     disabled={isSubmitting}
                     required
-                    placeholder="Minimum 8 caractères"
+                    placeholder="123456789"
                   />
                   <button
                     type="button"

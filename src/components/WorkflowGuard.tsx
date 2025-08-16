@@ -203,17 +203,17 @@ const WorkflowGuard: React.FC<WorkflowGuardProps> = ({ children }) => {
       // 1. Vérifier d'abord s'il y a un super admin existant
       const superAdminExists = await checkSuperAdminExists();
 
-      // 2. Vérifier l'état du workflow en cours
-      const currentWorkflow = await checkCurrentWorkflowState();
-
-      // 3. Si pas de super admin, commencer par là
+      // 2. Si pas de super admin, commencer par là SANS vérifier l'auth
       if (!superAdminExists) {
-        console.log('⚠️ Pas de super admin -> Étape SUPER_ADMIN (initialisation)');
+        console.log('⚠️ Pas de super admin -> Étape SUPER_ADMIN (initialisation sans auth)');
         setInitStep(WORKFLOW_STEPS.SUPER_ADMIN);
         setWorkflowState('needs-init');
         setLoading(false);
         return;
       }
+
+      // 3. Vérifier l'état du workflow en cours seulement si super admin existe
+      const currentWorkflow = await checkCurrentWorkflowState();
 
       // 4. Si super admin existe, vérifier l'étape suivante
       if (currentWorkflow) {
@@ -230,8 +230,8 @@ const WorkflowGuard: React.FC<WorkflowGuardProps> = ({ children }) => {
             nextStep = WORKFLOW_STEPS.CREATE_ADMIN;
             break;
           case WORKFLOW_STEPS.CREATE_ADMIN:
-            // Après création admin, on doit se connecter
-            nextStep = WORKFLOW_STEPS.CREATE_ADMIN;
+            // Forcer le passage à l'organisation après create-admin
+            nextStep = WORKFLOW_STEPS.CREATE_ORGANIZATION;
             break;
           case WORKFLOW_STEPS.CREATE_ORGANIZATION:
             nextStep = WORKFLOW_STEPS.SMS_VALIDATION;
