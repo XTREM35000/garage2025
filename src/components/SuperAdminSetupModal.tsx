@@ -105,68 +105,42 @@ const SuperAdminSetupModal: React.FC<SuperAdminSetupModalProps> = ({
   // Gestion de la soumission optimisée
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isFormValid() || isSubmitting) return;
-
     setIsSubmitting(true);
 
     try {
-      // Création du compte Auth
-      const { data: authData, error: signUpError } = await supabase.auth.signUp({
+      // 1. Appel de la fonction stockée corrigée
+      const { data: userId, error: rpcError } = await supabase.rpc('create_user_profile', {
+        user_email: formData.email.value,
+        user_name: formData.name.value,
+        user_phone: formData.phone.value,
+        user_password: formData.password.value
+      });
+
+      if (rpcError) {
+        console.error('Erreur RPC:', rpcError);
+        throw new Error(`Échec de la création: ${rpcError.message}`);
+      }
+
+      // 2. Connexion automatique après création
+      const { error: authError } = await supabase.auth.signInWithPassword({
         email: formData.email.value,
-        password: formData.password.value,
-        options: {
-          data: {
-            name: formData.name.value,
-            phone: formData.phone.value
-          }
-        }
+        password: formData.password.value
       });
 
-      if (signUpError) throw signUpError;
-      if (!authData.user) throw new Error('User creation failed');
-
-      // Création du profil via la fonction qui contourne RLS
-      const { error: profileError } = await supabase.rpc('create_profile_bypass_rls', {
-        p_user_id: authData.user.id,
-        p_email: formData.email.value,
-        p_name: formData.name.value,
-        p_role: mode === 'super-admin' ? 'superadmin' : 'admin'
-      });
-
-      if (profileError) {
-        console.error('❌ Erreur création profil:', profileError);
-        throw profileError;
+      if (authError) {
+        console.error('Erreur de connexion:', authError);
+        throw new Error('Compte créé mais échec de la connexion automatique');
       }
 
-      // Création dans la table appropriée selon le mode
-      if (mode === 'super-admin') {
-        const { error: adminError } = await supabase
-          .from('super_admins')
-          .insert([{
-            user_id: authData.user.id,
-            email: formData.email.value,
-            nom: formData.name.value,
-            prenom: '', // Champ requis mais pas utilisé
-            phone: formData.phone.value
-          }]);
-
-        if (adminError) throw adminError;
-      }
-
-      // Afficher le message de succès
+      // 3. Succès
+      toast.success('Super Admin créé avec succès!');
       setShowSuccessMessage(true);
-      
-      // Notifier le succès
-      toast.success(`Compte ${mode === 'super-admin' ? 'Super Admin' : 'Admin'} créé avec succès!`);
-      
-      // Attendre un peu avant de continuer
-      setTimeout(() => {
-        onComplete();
-      }, 1500);
+
+      setTimeout(() => onComplete(), 2000);
 
     } catch (error: any) {
-      console.error('❌ Erreur création compte:', error);
-      toast.error(error.message || 'Erreur lors de la création');
+      console.error('Erreur complète:', error);
+      toast.error(error.message || 'Erreur inconnue lors de la création');
     } finally {
       setIsSubmitting(false);
     }

@@ -5,12 +5,12 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Building, Key, Loader2, AlertCircle } from 'lucide-react';
-import { getAvailableOrganizations, supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client'; // Import modifié
 import { toast } from 'sonner';
 
 interface Organization {
   id: string;
-  nom: string;
+  name: string; // Changé de 'nom' à 'name' pour correspondre à Supabase
   code: string;
   description?: string;
 }
@@ -36,68 +36,29 @@ const OrganizationSelect: React.FC<OrganizationSelectProps> = ({ onSelect }) => 
     try {
       setIsLoading(true);
       setError('');
-      console.log('🔍 OrganizationSelect: Début récupération organisations...');
 
-      // Test direct des organisations
-      console.log('🧪 Test direct des organisations...');
-      const { data: directOrgs, error: directError } = await supabase
-        .from('organisations')
+      // Récupération directe depuis Supabase
+      const { data: organizationsData, error: orgError } = await supabase
+        .from('organizations') // Vérifiez le nom exact de votre table
         .select('id, name, code, description')
-        .order('name');
-      
-      console.log('🔍 Organisations directes:', directOrgs);
-      console.log('❌ Erreur directe:', directError);
+        .order('name', { ascending: true });
 
-      let orgs = [];
-      let isSuper = false;
-      let fetchError = null;
+      if (orgError) throw orgError;
 
-      try {
-        const result = await getAvailableOrganizations();
-        orgs = result?.data || [];
-        isSuper = false;
-        fetchError = result?.error;
-      } catch (error) {
-        console.error('❌ Erreur getAvailableOrganizations:', error);
-        fetchError = error.message;
-      }
+      // Vérification du rôle super admin (ajustez selon votre logique)
+      const { data: { user } } = await supabase.auth.getUser();
+      const isSuper = user?.email?.endsWith('@admin.com'); // Exemple basique
 
-      console.log('🔍 OrganizationSelect: Résultat récupération:', {
-        orgs: orgs?.length || 0,
-        isSuperAdmin: isSuper,
-        error: fetchError,
-        orgsDetails: orgs
-      });
-
-      // Si aucune organisation n'est trouvée via getAvailableOrganizations, utiliser les organisations directes
-      if (!orgs || orgs.length === 0) {
-        console.log('🔄 Aucune organisation trouvée via getAvailableOrganizations, utilisation des organisations directes...');
-        if (!directError && directOrgs && directOrgs.length > 0) {
-          const mappedOrgs = directOrgs.map(org => ({
-            id: org.id,
-            nom: org.name,
-            code: org.code,
-            description: org.description
-          }));
-          console.log('✅ Organisations récupérées directement:', mappedOrgs);
-          setOrganizations(mappedOrgs);
-          setIsSuperAdmin(false);
-          return;
-        }
-      }
-
-      console.log('✅ OrganizationSelect: Organisations détaillées:', orgs);
-      setOrganizations(orgs || []);
+      setOrganizations(organizationsData || []);
       setIsSuperAdmin(isSuper || false);
 
-      if (orgs && orgs.length === 1) {
-        setSelectedOrgId(orgs[0].id);
-        console.log('🎯 OrganizationSelect: Auto-sélection organisation unique:', orgs[0].nom);
+      if (organizationsData?.length === 1) {
+        setSelectedOrgId(organizationsData[0].id);
       }
 
     } catch (error: any) {
-      console.error('❌ OrganizationSelect: Erreur récupération organisations:', error);
-      setError('Erreur lors du chargement des organisations. Veuillez réessayer.');
+      console.error('Erreur récupération organisations:', error);
+      setError(error.message || 'Erreur lors du chargement des organisations');
       toast.error('Impossible de charger les organisations');
     } finally {
       setIsLoading(false);
@@ -112,13 +73,13 @@ const OrganizationSelect: React.FC<OrganizationSelectProps> = ({ onSelect }) => 
       return;
     }
 
-    if (isSuperAdmin) {
-      const selectedOrg = organizations.find(org => org.id === selectedOrgId);
-      onSelect(selectedOrgId, selectedOrg?.code || '');
+    const selectedOrg = organizations.find(org => org.id === selectedOrgId);
+    if (!selectedOrg) {
+      setError('Organisation invalide');
       return;
     }
 
-    if (!accessCode.trim()) {
+    if (!isSuperAdmin && !accessCode.trim()) {
       setError('Veuillez saisir le code d\'accès');
       return;
     }
@@ -127,24 +88,16 @@ const OrganizationSelect: React.FC<OrganizationSelectProps> = ({ onSelect }) => 
     setError('');
 
     try {
-      const selectedOrg = organizations.find(org => org.id === selectedOrgId);
-
-      if (!selectedOrg) {
-        throw new Error('Organisation non trouvée');
-      }
-
-      // Vérifier d'abord si le code correspond directement
-      if (selectedOrg.code !== accessCode.trim()) {
+      // En mode super admin, on saute la vérification du code
+      if (!isSuperAdmin && selectedOrg.code !== accessCode.trim()) {
         throw new Error('Code d\'accès incorrect');
       }
 
-      // Si le code correspond, permettre l'accès (mode demo)
-      onSelect(selectedOrgId, accessCode.trim());
+      onSelect(selectedOrgId, selectedOrg.code);
 
     } catch (error: any) {
-      console.error('Erreur sélection organisation:', error);
-      setError(error.message || 'Code d\'accès invalide');
-      toast.error('Code d\'accès incorrect');
+      setError(error.message || 'Erreur de validation');
+      toast.error(error.message || 'Erreur lors de la sélection');
     } finally {
       setIsSubmitting(false);
     }
@@ -152,11 +105,11 @@ const OrganizationSelect: React.FC<OrganizationSelectProps> = ({ onSelect }) => 
 
   if (isLoading) {
     return (
-      <Card>
+      <Card className="max-w-md mx-auto">
         <CardContent className="flex items-center justify-center py-8">
-          <div className="text-center">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
-            <p className="text-gray-600">Chargement des organisations...</p>
+          <div className="text-center space-y-2">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+            <p>Chargement des organisations...</p>
           </div>
         </CardContent>
       </Card>
@@ -165,33 +118,30 @@ const OrganizationSelect: React.FC<OrganizationSelectProps> = ({ onSelect }) => 
 
   if (organizations.length === 0) {
     return (
-      <Card>
-        <CardContent className="py-8">
-          <Alert>
+      <Card className="max-w-md mx-auto">
+        <CardContent className="py-6 space-y-4">
+          <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              Aucune organisation disponible. Contactez votre administrateur pour obtenir l'accès à une organisation.
+              Aucune organisation disponible. Contactez votre administrateur.
             </AlertDescription>
           </Alert>
-
-          <div className="mt-4 text-center">
-            <Button onClick={fetchOrganizations} variant="outline">
-              Actualiser
-            </Button>
-          </div>
+          <Button onClick={fetchOrganizations} variant="outline" className="w-full">
+            Réessayer
+          </Button>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card>
+    <Card className="max-w-md mx-auto">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Building className="w-5 h-5" />
           Sélection d'organisation
           {isSuperAdmin && (
-            <span className="text-sm bg-green-100 text-green-800 px-2 py-1 rounded-full">
+            <span className="text-xs bg-emerald-100 text-emerald-800 px-2 py-1 rounded-full ml-auto">
               Super Admin
             </span>
           )}
@@ -207,18 +157,17 @@ const OrganizationSelect: React.FC<OrganizationSelectProps> = ({ onSelect }) => 
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="organization">Organisation</Label>
+            <Label>Organisation</Label>
             <select
-              id="organization"
               value={selectedOrgId}
               onChange={(e) => setSelectedOrgId(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               required
             >
               <option value="">Sélectionnez une organisation</option>
               {organizations.map((org) => (
                 <option key={org.id} value={org.id}>
-                  {org.nom}
+                  {org.name}
                   {org.description && ` - ${org.description}`}
                 </option>
               ))}
@@ -229,46 +178,30 @@ const OrganizationSelect: React.FC<OrganizationSelectProps> = ({ onSelect }) => 
             <div className="space-y-2">
               <Label htmlFor="accessCode">Code d'accès</Label>
               <div className="relative">
-                <Key className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Key className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="accessCode"
                   type="text"
                   value={accessCode}
                   onChange={(e) => setAccessCode(e.target.value)}
                   className="pl-10"
-                  placeholder="Saisissez le code d'accès"
+                  placeholder="Code d'accès fourni par l'admin"
                   required
                 />
               </div>
-              <p className="text-sm text-gray-600">
-                Demandez le code d'accès à votre administrateur
-              </p>
             </div>
           )}
 
-          {isSuperAdmin && selectedOrgId && (
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                En tant que Super Admin, vous avez accès direct à toutes les organisations.
-              </AlertDescription>
-            </Alert>
-          )}
-
-          <Button
-            type="submit"
-            disabled={isSubmitting || !selectedOrgId}
-            className="w-full"
-          >
+          <Button type="submit" disabled={isSubmitting} className="w-full gap-2">
             {isSubmitting ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin" />
                 Vérification...
               </>
             ) : (
               <>
-                <Building className="mr-2 h-4 w-4" />
-                Accéder à l'organisation
+                <Building className="h-4 w-4" />
+                Accéder
               </>
             )}
           </Button>
