@@ -58,14 +58,15 @@ const CompletionSummaryModal: React.FC<CompletionSummaryModalProps> = ({
         // Vérifier si l'utilisateur est connecté
         const { data: { session } } = await supabase.auth.getSession();
 
-        if (session) {
-          // Redirection vers le dashboard si connecté
+        if (session?.user) {
+          console.log('✅ Redirection vers dashboard avec utilisateur:', session.user.email);
           navigate('/dashboard');
         } else {
-          // Sinon, redirection vers l'auth
+          console.log('❌ Pas de session - redirection vers auth');
           navigate('/auth');
         }
-      }, 5000);
+        onClose();
+      }, 3000); // Réduire le délai pour un test plus rapide
 
       return () => clearTimeout(timer);
     }
@@ -107,7 +108,7 @@ const CompletionSummaryModal: React.FC<CompletionSummaryModalProps> = ({
             </div>
 
             <p className="text-sm text-muted-foreground text-center">
-              Redirection vers la page de connexion dans quelques secondes...
+              Redirection vers le dashboard dans quelques secondes...
             </p>
           </div>
         </div>

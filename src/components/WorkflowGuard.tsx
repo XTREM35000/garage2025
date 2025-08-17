@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useAuthSession } from '@/hooks/useAuthSession';
 import SplashScreen from './SplashScreen';
 import InitializationWizard from './InitializationWizard';
 import CompletionSummaryModal from './CompletionSummaryModal';
@@ -52,6 +53,20 @@ const WorkflowGuard: React.FC<WorkflowGuardProps> = ({ children }) => {
   const [hasSuperAdmin, setHasSuperAdmin] = useState<boolean | null>(null);
   const [currentWorkflowData, setCurrentWorkflowData] = useState<any>(null);
   const navigate = useNavigate();
+  
+  // Hook pour la gestion de l'authentification
+  const { user, session, isAuthenticated, isLoading: authLoading } = useAuthSession();
+
+  // Logs de debug pour l'état d'authentification
+  useEffect(() => {
+    console.log('🔍 [WorkflowGuard] État auth:', {
+      hasUser: !!user,
+      userEmail: user?.email,
+      hasSession: !!session,
+      isAuthenticated,
+      authLoading
+    });
+  }, [user, session, isAuthenticated, authLoading]);
 
   // Fonction pour mettre à jour l'étape du workflow
   const updateWorkflowStep = async (userId: string, step: WorkflowStep, organisationId?: string) => {
@@ -326,15 +341,47 @@ const WorkflowGuard: React.FC<WorkflowGuardProps> = ({ children }) => {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('🔄 État auth:', event, session?.user?.email);
+        console.log('🔄 État auth WorkflowGuard:', event, session?.user?.email);
 
-        if (event === 'SIGNED_IN') {
-          // Re-vérifier le workflow quand un utilisateur se connecte
-          checkWorkflowState();
+        if (event === 'SIGNED_IN' && session?.user) {
+          // Admin connecté - vérifier son profil et continuer le workflow
+          const userAccessData = await checkUserAccess(session.user.id);
+          
+          if (userAccessData?.profile?.role === 'admin') {
+            console.log('✅ Admin connecté - accès au workflow');
+            
+            // Vérifier l'état du workflow pour cet utilisateur
+            const { data: workflowData } = await supabase
+              .from('onboarding_workflow_states')
+              .select('*')
+              .eq('user_id', session.user.id)
+              .order('updated_at', { ascending: false })
+              .limit(1);
+
+            if (workflowData && workflowData.length > 0) {
+              const currentWorkflow = workflowData[0];
+              console.log('📋 Workflow existant détecté:', currentWorkflow.current_step);
+              
+              if (currentWorkflow.current_step === 'complete') {
+                setWorkflowState('completed');
+              } else {
+                setInitStep(currentWorkflow.current_step as ExtendedInitializationStep);
+                setWorkflowState('needs-init');
+              }
+            } else {
+              // Nouvel admin - continuer le workflow
+              setInitStep(WORKFLOW_STEPS.CREATE_ORGANIZATION);
+              setWorkflowState('needs-init');
+            }
+          } else {
+            console.log('❌ Utilisateur non admin - redirection');
+            setWorkflowState('needs-auth');
+          }
         } else if (event === 'SIGNED_OUT') {
+          console.log('👋 Déconnexion détectée');
           setWorkflowState('needs-auth');
           setUserProfile(null);
-          navigate('/login');
+          setUserOrganization(null);
         }
       }
     );
@@ -384,16 +431,8 @@ const WorkflowGuard: React.FC<WorkflowGuardProps> = ({ children }) => {
 
   // État prêt - afficher le contenu principal
   if (workflowState === 'ready') {
-    // Si l'utilisateur est Admin/Tenant, afficher le dashboard
-    if (userProfile?.role === 'admin' && userOrganization?.status === 'tenant') {
-      console.log('🎯 Affichage du dashboard Admin/Tenant');
-      return children;
-    }
-
-    // Sinon, continuer avec l'initialisation
-    console.log('🔄 Redémarrage de l\'initialisation');
-    setWorkflowState('needs-init');
-    return null;
+    console.log('🎯 Affichage du contenu principal');
+    return children;
   }
 
   // État par défaut

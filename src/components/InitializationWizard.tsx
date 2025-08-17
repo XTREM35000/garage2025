@@ -150,8 +150,18 @@ const InitializationWizard: React.FC<InitializationWizardProps> = ({
 
             console.log('✅ Connexion admin réussie:', data);
             
+            // Attendre que la session soit bien établie
+            await new Promise(resolve => setTimeout(resolve, 500));
             
-            setCurrentStep(WORKFLOW_STEPS.CREATE_ORGANIZATION);
+            // Vérifier que l'utilisateur est bien connecté
+            const { data: { session: currentSession } } = await supabase.auth.getSession();
+            if (currentSession?.user) {
+              console.log('✅ Session confirmée pour:', currentSession.user.email);
+              setCurrentStep(WORKFLOW_STEPS.CREATE_ORGANIZATION);
+            } else {
+              console.error('❌ Session non établie après connexion');
+              toast.error('Erreur: Session non établie');
+            }
           } catch (authError) {
             console.error('❌ Erreur connexion:', authError);
             toast.error('Erreur lors de la connexion');
