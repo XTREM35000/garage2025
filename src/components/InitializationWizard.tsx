@@ -66,6 +66,7 @@ const InitializationWizard: React.FC<InitializationWizardProps> = ({
 
   const navigate = useNavigate();
 
+
   // Calculer la progression du workflow
   const calculateProgress = (step: ExtendedInitializationStep) => {
     const stepOrder = [
@@ -77,7 +78,7 @@ const InitializationWizard: React.FC<InitializationWizardProps> = ({
       WORKFLOW_STEPS.GARAGE_SETUP
     ];
     
-    const currentIndex = stepOrder.indexOf(step);
+    const currentIndex = stepOrder.indexOf(step as any);
     const stepNames = [
       'Super Admin',
       'Plan Tarifaire',
@@ -88,9 +89,9 @@ const InitializationWizard: React.FC<InitializationWizardProps> = ({
     ];
 
     return {
-      current: currentIndex + 1,
+      current: currentIndex >= 0 ? currentIndex + 1 : stepOrder.length,
       total: stepOrder.length,
-      stepName: stepNames[currentIndex] || 'Initialisation'
+      stepName: stepNames[currentIndex] || 'Terminé'
     };
   };
 
@@ -112,144 +113,72 @@ const InitializationWizard: React.FC<InitializationWizardProps> = ({
     }
   }, [startStep]);
 
-  // Gestion de la création du super admin
-  const handleSuperAdminCreated = async () => {
-    console.log('✅ Super Admin créé, passage au pricing');
-    try {
-      setIsLoading(true);
-      
-      // Attendre un peu pour l'effet visuel
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Passer à l'étape suivante
-      const nextStep = WORKFLOW_STEPS.PRICING;
-      setCurrentStep(nextStep);
-      
-      toast.success('Super Admin créé avec succès ! Passage au choix du plan...');
-      
-    } catch (error) {
-      console.error('❌ Erreur transition super admin:', error);
-      toast.error('Erreur lors de la transition');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Gérer la progression du workflow
+  const handleStepComplete = async (stepData?: any) => {
+    console.log('🎯 Étape terminée:', currentStep, stepData);
 
-  // Gestion de la sélection du plan
-  const handlePlanSelection = async (planId: string) => {
     try {
-      console.log('✅ Plan sélectionné:', planId);
-      setIsLoading(true);
-      
-      // Mettre à jour les données de l'organisation
-      setOrganizationData(prev => ({ ...prev, selectedPlan: planId }));
-      
-      // Attendre un peu pour l'effet visuel
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Passer à l'étape suivante
-      const nextStep = WORKFLOW_STEPS.CREATE_ADMIN;
-      setCurrentStep(nextStep);
-      
-      toast.success('Plan sélectionné ! Création de l\'administrateur...');
-      
-    } catch (error) {
-      console.error('❌ Erreur plan:', error);
-      toast.error('Erreur lors de la sélection du plan');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      switch (currentStep) {
+        case WORKFLOW_STEPS.SUPER_ADMIN:
+          setCurrentStep(WORKFLOW_STEPS.PRICING);
+          break;
 
-  // Gestion de la création de l'admin
-  const handleAdminCreated = async () => {
-    console.log('✅ Admin créé, passage à l\'organisation');
-    try {
-      setIsLoading(true);
-      
-      // Attendre un peu pour l'effet visuel
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Passer à l'étape suivante
-      const nextStep = WORKFLOW_STEPS.CREATE_ORGANIZATION;
-      setCurrentStep(nextStep);
-      
-      toast.success('Administrateur créé ! Configuration de l\'organisation...');
-      
-    } catch (error) {
-      console.error('❌ Erreur transition admin:', error);
-      toast.error('Erreur lors de la transition');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+        case WORKFLOW_STEPS.PRICING:
+          setOrganizationData(prev => ({ ...prev, selectedPlan: stepData }));
+          setCurrentStep(WORKFLOW_STEPS.CREATE_ADMIN);
+          break;
 
-  // Gestion de la création de l'organisation
-  const handleOrganizationCreated = async () => {
-    console.log('✅ Organisation créée, passage à la validation SMS');
-    try {
-      setIsLoading(true);
-      
-      // Attendre un peu pour l'effet visuel
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Passer à l'étape suivante
-      const nextStep = WORKFLOW_STEPS.SMS_VALIDATION;
-      setCurrentStep(nextStep);
-      
-      toast.success('Organisation créée ! Validation par SMS...');
-      
-    } catch (error) {
-      console.error('❌ Erreur transition organisation:', error);
-      toast.error('Erreur lors de la transition');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+        case WORKFLOW_STEPS.CREATE_ADMIN:
+          console.log('🔐 Admin créé, préparation pour la connexion...');
+          setAdminData(stepData);
+          
+          // Attendre un peu que l'utilisateur soit créé
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          // Tentative de connexion immédiate avec l'admin créé
+          try {
+            const { data, error } = await supabase.auth.signInWithPassword({
+              email: stepData.email,
+              password: stepData.password
+            });
 
-  // Gestion de la validation SMS
-  const handleSmsValidated = async () => {
-    console.log('✅ SMS validé, passage à la configuration du garage');
-    try {
-      setIsLoading(true);
-      
-      // Attendre un peu pour l'effet visuel
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Passer à l'étape suivante
-      const nextStep = WORKFLOW_STEPS.GARAGE_SETUP;
-      setCurrentStep(nextStep);
-      
-      toast.success('SMS validé ! Configuration du garage...');
-      
-    } catch (error) {
-      console.error('❌ Erreur transition SMS:', error);
-      toast.error('Erreur lors de la transition');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+            if (error) {
+              console.error('❌ Erreur de connexion admin:', error);
+              toast.error('Erreur de connexion: ' + error.message);
+              return;
+            }
 
-  // Gestion de la configuration du garage
-  const handleGarageConfigured = async () => {
-    console.log('✅ Garage configuré, finalisation du workflow');
-    try {
-      setIsLoading(true);
-      
-      // Attendre un peu pour l'effet visuel
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Notifier la completion du workflow
-      toast.success('Configuration terminée ! Redirection vers le dashboard...');
-      
-      // Appeler onComplete pour notifier WorkflowGuard
-      onComplete();
-      
+            console.log('✅ Connexion admin réussie:', data);
+            
+            
+            setCurrentStep(WORKFLOW_STEPS.CREATE_ORGANIZATION);
+          } catch (authError) {
+            console.error('❌ Erreur connexion:', authError);
+            toast.error('Erreur lors de la connexion');
+          }
+          break;
+
+        case WORKFLOW_STEPS.CREATE_ORGANIZATION:
+          setOrganizationData(stepData);
+          setCurrentStep(WORKFLOW_STEPS.SMS_VALIDATION);
+          break;
+
+        case WORKFLOW_STEPS.SMS_VALIDATION:
+          setCurrentStep(WORKFLOW_STEPS.GARAGE_SETUP);
+          break;
+
+        case WORKFLOW_STEPS.GARAGE_SETUP:
+          console.log('✅ Workflow terminé!');
+          // Terminer le workflow
+          onComplete();
+          break;
+
+        default:
+          console.error('❌ Étape inconnue:', currentStep);
+      }
     } catch (error) {
-      console.error('❌ Erreur finalisation garage:', error);
-      toast.error('Erreur lors de la finalisation');
-    } finally {
-      setIsLoading(false);
+      console.error('❌ Erreur lors de la progression:', error);
+      toast.error('Erreur lors de la progression du workflow');
     }
   };
 
@@ -283,7 +212,7 @@ const InitializationWizard: React.FC<InitializationWizardProps> = ({
         return (
           <SuperAdminSetupModal
             isOpen={isOpen}
-            onComplete={handleSuperAdminCreated}
+            onComplete={handleStepComplete}
             mode="super-admin"
             adminData={adminData}
             onAdminDataChange={(field, value) =>
@@ -301,7 +230,7 @@ const InitializationWizard: React.FC<InitializationWizardProps> = ({
         return (
           <PricingModal
             isOpen={isOpen}
-            onSelectPlan={handlePlanSelection}
+            onSelectPlan={handleStepComplete}
           />
         );
 
@@ -310,7 +239,7 @@ const InitializationWizard: React.FC<InitializationWizardProps> = ({
         return (
           <SuperAdminSetupModal
             isOpen={isOpen}
-            onComplete={handleAdminCreated}
+            onComplete={handleStepComplete}
             mode="normal"
             adminData={adminData}
             onAdminDataChange={(field, value) =>
@@ -328,7 +257,7 @@ const InitializationWizard: React.FC<InitializationWizardProps> = ({
         return (
           <OrganizationSetupModal
             isOpen={isOpen}
-            onComplete={handleOrganizationCreated}
+            onComplete={handleStepComplete}
             selectedPlan={organizationData.selectedPlan}
           />
         );
@@ -338,7 +267,7 @@ const InitializationWizard: React.FC<InitializationWizardProps> = ({
         return (
           <SmsValidationModal
             isOpen={isOpen}
-            onComplete={handleSmsValidated}
+            onComplete={handleStepComplete}
             organizationName={organizationData.name}
             organizationCode={organizationData.slug}
             adminName={adminData.name}
@@ -350,7 +279,7 @@ const InitializationWizard: React.FC<InitializationWizardProps> = ({
         return (
           <GarageSetupModal
             isOpen={isOpen}
-            onComplete={handleGarageConfigured}
+            onComplete={handleStepComplete}
             organizationName={organizationData.name}
           />
         );

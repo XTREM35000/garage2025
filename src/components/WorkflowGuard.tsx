@@ -148,18 +148,19 @@ const WorkflowGuard: React.FC<WorkflowGuardProps> = ({ children }) => {
   // Fonction pour vérifier s'il y a un super admin existant
   const checkSuperAdminExists = async (): Promise<boolean> => {
     try {
-      const { count, error } = await supabase
+      const { data, error } = await supabase
         .from('super_admins')
-        .select('*', { count: 'exact' });
+        .select('id, est_actif')
+        .eq('est_actif', true);
 
       if (error) {
         console.error('❌ Erreur vérification super admin:', error);
         return false;
       }
 
-      const exists = (count || 0) > 0;
+      const exists = data && data.length > 0;
       setHasSuperAdmin(exists);
-      console.log('👑 Super admin existe:', exists, 'Nombre:', count);
+      console.log('👑 Super admin existe:', exists, 'Nombre:', data?.length || 0);
       return exists;
     } catch (error) {
       console.error('❌ Erreur vérification super admin:', error);
@@ -203,10 +204,7 @@ const WorkflowGuard: React.FC<WorkflowGuardProps> = ({ children }) => {
       // 1. Vérifier d'abord s'il y a un super admin existant
       const superAdminExists = await checkSuperAdminExists();
 
-      // 2. Vérifier l'état du workflow en cours
-      const currentWorkflow = await checkCurrentWorkflowState();
-
-      // 3. Si pas de super admin, commencer par là
+      // 2. Si pas de super admin, commencer par là IMMÉDIATEMENT
       if (!superAdminExists) {
         console.log('⚠️ Pas de super admin -> Étape SUPER_ADMIN (initialisation)');
         setInitStep(WORKFLOW_STEPS.SUPER_ADMIN);
@@ -214,6 +212,9 @@ const WorkflowGuard: React.FC<WorkflowGuardProps> = ({ children }) => {
         setLoading(false);
         return;
       }
+
+      // 3. Vérifier l'état du workflow en cours seulement si super admin existe
+      const currentWorkflow = await checkCurrentWorkflowState();
 
       // 4. Si super admin existe, vérifier l'étape suivante
       if (currentWorkflow) {
@@ -229,10 +230,9 @@ const WorkflowGuard: React.FC<WorkflowGuardProps> = ({ children }) => {
           case WORKFLOW_STEPS.PRICING:
             nextStep = WORKFLOW_STEPS.CREATE_ADMIN;
             break;
-          case WORKFLOW_STEPS.CREATE_ADMIN:
-            // Après création admin, on doit se connecter
-            nextStep = WORKFLOW_STEPS.CREATE_ADMIN;
-            break;
+      case WORKFLOW_STEPS.CREATE_ADMIN:
+        nextStep = WORKFLOW_STEPS.CREATE_ORGANIZATION;
+        break;
           case WORKFLOW_STEPS.CREATE_ORGANIZATION:
             nextStep = WORKFLOW_STEPS.SMS_VALIDATION;
             break;

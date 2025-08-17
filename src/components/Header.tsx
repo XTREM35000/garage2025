@@ -1,17 +1,18 @@
 import React from 'react';
 import { Car, Wrench, Zap, User, LogOut, Settings, Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useSimpleAuth } from '@/hooks/useSimpleAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 const Header: React.FC = () => {
-  const { user, signOut } = useSimpleAuth();
+  const { user, userProfile } = useAuth();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
     try {
-      await signOut();
+      await supabase.auth.signOut();
       toast.success('Déconnexion réussie');
       navigate('/auth');
     } catch (error) {
@@ -99,11 +100,26 @@ const Header: React.FC = () => {
 
         {/* Menu utilisateur */}
         <div className="flex items-center space-x-2">
-          <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm rounded-lg px-3 py-2 border border-white/20">
-            <div className="w-3 h-3 rounded-full bg-green-500" />
+          <div className="flex items-center space-x-3 bg-white/10 backdrop-blur-sm rounded-lg px-3 py-2 border border-white/20">
+            {userProfile?.avatar_url ? (
+              <img 
+                src={userProfile.avatar_url} 
+                alt="Avatar"
+                className="w-8 h-8 rounded-full object-cover"
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                <span className="text-white text-xs font-medium">
+                  {userProfile?.full_name?.charAt(0) || user?.email?.charAt(0) || 'U'}
+                </span>
+              </div>
+            )}
             <div className="flex flex-col">
+              <span className="text-xs text-white font-medium">
+                {userProfile?.full_name || 'Utilisateur'}
+              </span>
               <span className="text-xs text-white/70">
-                {user?.email}
+                {userProfile?.role || 'Admin'}
               </span>
             </div>
           </div>

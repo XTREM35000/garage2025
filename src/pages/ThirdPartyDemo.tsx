@@ -325,12 +325,10 @@ const ThirdPartyDemo: React.FC = () => {
         {currentAuth && (
           <SmsValidationModal
             isOpen={showSmsValidation}
-            onClose={() => {
+            onComplete={() => {
               setShowSmsValidation(false);
               setCurrentAuth(null);
             }}
-            onValidate={handleSmsValidate}
-            onRefuse={handleSmsReject}
             organizationName={currentAuth.thirdPartyName}
             adminName="Tiers"
           />
