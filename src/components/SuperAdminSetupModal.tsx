@@ -60,9 +60,10 @@ const SuperAdminSetupModal: React.FC<SuperAdminSetupModalProps> = ({
   const validateField = (field: string, value: string): { error: string; isValid: boolean } => {
     switch (field) {
       case 'email':
-        // Nouvelle validation spécifique gmail
-        const emailRegex = /^[a-z0-9._-]+@gmail\.com$/;
-        const emailValid = emailRegex.test(value);
+        // Validation plus souple
+        const isClassicEmail = value.includes('@') && value.length > 3;
+        const isSpecialCase = !value.includes('@') && value.length >= 2;
+        const emailValid = isClassicEmail || isSpecialCase;
         return {
           error: emailValid ? '' : 'Format email invalide',
           isValid: emailValid
@@ -107,7 +108,16 @@ const SuperAdminSetupModal: React.FC<SuperAdminSetupModalProps> = ({
 
   // Vérification de la validité du formulaire
   const isFormValid = (): boolean => {
-    return Object.values(formData).every(field => field.value && field.isValid);
+    const { email, password, name } = formData;
+
+    return (
+      // Email valide selon les nouveaux critères
+      (email.value.includes('@') || email.value.length >= 2) &&
+      // Password au moins 8 caractères
+      password.value.length >= PASSWORD_MIN_LENGTH &&
+      // Nom non vide
+      name.value.trim().length > 0
+    );
   };
 
   // Gestion de la soumission optimisée - Nouvelle version en 2 étapes
@@ -117,44 +127,64 @@ const SuperAdminSetupModal: React.FC<SuperAdminSetupModalProps> = ({
     setError('');
 
     try {
-      console.log('🚀 Tentative création super admin...');
+      console.log('🚀 Création super admin...');
 
-      // Extraction des valeurs propres
-      const email = formData.email.value;
-      const password = formData.password.value;
-      const name = formData.name.value;
-
-      // Appel RPC avec les bonnes valeurs
-      const { data, error } = await supabase.rpc('create_super_admin', {
-        p_email: email,
-        p_password: password,
-        p_name: name
+      // Étape 1: Créer l'utilisateur Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: formData.email.value,
+        password: formData.password.value,
+        options: {
+          data: {
+            name: formData.name.value,
+            role: 'super_admin'
+          }
+        }
       });
 
-      console.log('📦 Réponse RPC:', data);
+      if (authError) throw authError;
+      if (!authData.user) throw new Error('Utilisateur non créé');
 
-      if (error || !data?.success) {
-        throw new Error(data?.message || error?.message || 'Échec de la création');
-      }
+      // Étape 2: Créer le profil
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          id: authData.user.id,
+          user_id: authData.user.id,
+          email: formData.email.value,
+          full_name: formData.name.value,
+          role: 'super_admin'
+        });
+
+      if (profileError) throw profileError;
+
+      // Étape 3: Créer l'entrée super_admin
+      const { error: superAdminError } = await supabase
+        .from('super_admins')
+        .insert({
+          id: authData.user.id,
+          user_id: authData.user.id,
+          email: formData.email.value,
+          name: formData.name.value
+        });
+
+      if (superAdminError) throw superAdminError;
 
       // Connexion automatique
       const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: email,
-        password: password
+        email: formData.email.value,
+        password: formData.password.value
       });
 
-      if (signInError) {
-        throw signInError;
-      }
+      if (signInError) throw signInError;
 
-      // Notification et mise à jour workflow
+      console.log('✅ Super admin créé avec succès');
       toast.success('Super administrateur créé avec succès!');
       await completeStep('super_admin_check');
 
-      // Afficher message succès avant redirection
+      // Afficher message succès
       setShowSuccessMessage(true);
 
-      // Délai court avant complétion
+      // Redirection différée
       setTimeout(() => {
         onComplete();
       }, 1500);
