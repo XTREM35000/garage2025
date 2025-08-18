@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Car, Wrench, Zap, Building2, CheckCircle } from 'lucide-react';
 
 interface SplashScreenProps {
-  onComplete: () => void;
+  visible: boolean;
+  onComplete?: () => void;
 }
 
-const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
+const SplashScreen: React.FC<SplashScreenProps> = ({ visible, onComplete }) => {
   const [progress, setProgress] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
   const [showCheckmark, setShowCheckmark] = useState(false);
@@ -19,19 +20,28 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
   ];
 
   useEffect(() => {
+    if (!visible) {
+      setProgress(0);
+      setCurrentStep(0);
+      setShowCheckmark(false);
+      return;
+    }
+
     const timer = setInterval(() => {
       setProgress(prev => {
         if (prev >= 100) {
           clearInterval(timer);
           setShowCheckmark(true);
           setTimeout(() => {
-            onComplete();
-          }, 1500); // Réduit à 1.5 secondes
+            if (onComplete) {
+              onComplete();
+            }
+          }, 1500);
           return 100;
         }
-        return prev + 1.5; // Accéléré de 1 à 1.5
+        return prev + 1.5;
       });
-    }, 80); // Accéléré de 100ms à 80ms
+    }, 80);
 
     const stepTimer = setInterval(() => {
       setCurrentStep(prev => {
@@ -41,16 +51,23 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
         }
         return prev + 1;
       });
-    }, 1200); // Accéléré de 1500ms à 1200ms
+    }, 1200);
 
     return () => {
       clearInterval(timer);
       clearInterval(stepTimer);
     };
-  }, [onComplete, steps.length]);
+  }, [visible, onComplete, steps.length]);
+
+  if (!visible) {
+    return null;
+  }
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center z-50">
+    <div 
+      data-testid="splash-screen"
+      className="fixed inset-0 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center z-50"
+    >
       {/* Particules animées en arrière-plan */}
       <div className="absolute inset-0 overflow-hidden">
         {[...Array(20)].map((_, i) => (

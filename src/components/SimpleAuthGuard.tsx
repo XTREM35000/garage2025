@@ -1,7 +1,7 @@
-import React from 'react';
-import { Navigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { useSimpleAuth } from '@/hooks/useSimpleAuth';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Shield, AlertCircle } from 'lucide-react';
 
 interface SimpleAuthGuardProps {
   children: React.ReactNode;
@@ -13,6 +13,16 @@ const SimpleAuthGuard: React.FC<SimpleAuthGuardProps> = ({
   requireAuth = true
 }) => {
   const { isAuthenticated, isLoading } = useSimpleAuth();
+  const navigate = useNavigate();
+  const [redirectAttempts, setRedirectAttempts] = useState(0);
+
+  // Éviter les boucles infinies de redirection
+  useEffect(() => {
+    if (redirectAttempts > 3) {
+      console.error('Too many redirect attempts in SimpleAuthGuard, stopping to prevent infinite loop');
+      return;
+    }
+  }, [redirectAttempts]);
 
   if (isLoading) {
     return (
@@ -35,6 +45,45 @@ const SimpleAuthGuard: React.FC<SimpleAuthGuardProps> = ({
   }
 
   if (requireAuth && !isAuthenticated) {
+    // Incrémenter le compteur de tentatives
+    setRedirectAttempts(prev => prev + 1);
+
+    // Afficher un message d'erreur si trop de tentatives
+    if (redirectAttempts > 2) {
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-50 flex items-center justify-center">
+          <div className="text-center space-y-6">
+            <div className="w-24 h-24 mx-auto bg-gradient-to-r from-red-500 to-orange-500 rounded-full flex items-center justify-center">
+              <AlertCircle className="w-12 h-12 text-white" />
+            </div>
+            <div className="space-y-2">
+              <h2 className="text-2xl font-semibold text-red-800">
+                Erreur d'authentification
+              </h2>
+              <p className="text-red-600 max-w-md">
+                Trop de tentatives de redirection détectées.
+                Veuillez rafraîchir la page ou vous connecter manuellement.
+              </p>
+            </div>
+            <div className="flex gap-3 justify-center">
+              <button
+                onClick={() => window.location.reload()}
+                className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+              >
+                Rafraîchir la page
+              </button>
+              <button
+                onClick={() => navigate('/auth')}
+                className="px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-medium"
+              >
+                Se connecter
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return <Navigate to="/auth" replace />;
   }
 

@@ -28,11 +28,21 @@ export const useAuthSession = () => {
         expires: session?.expires_at
       });
 
-      setAuthState({
-        user: session?.user || null,
-        session: session,
-        isAuthenticated: !!session?.user,
-        isLoading: false
+      // Éviter les mises à jour inutiles
+      setAuthState(prevState => {
+        const newState = {
+          user: session?.user || null,
+          session: session,
+          isAuthenticated: !!session?.user,
+          isLoading: false
+        };
+        
+        // Ne mettre à jour que si l'état a réellement changé
+        if (JSON.stringify(prevState) === JSON.stringify(newState)) {
+          return prevState;
+        }
+        
+        return newState;
       });
     };
 
@@ -60,7 +70,27 @@ export const useAuthSession = () => {
         userEmail: session?.user?.email
       });
       
-      updateAuthState(session);
+      // Gérer les événements spécifiques pour éviter les boucles
+      switch (event) {
+        case 'SIGNED_IN':
+        case 'TOKEN_REFRESHED':
+          updateAuthState(session);
+          break;
+        case 'SIGNED_OUT':
+          updateAuthState(null);
+          break;
+        case 'INITIAL_SESSION':
+          // Ne traiter que si l'état n'est pas déjà initialisé
+          if (authState.isLoading) {
+            updateAuthState(session);
+          }
+          break;
+        default:
+          // Pour les autres événements, mettre à jour seulement si nécessaire
+          if (session !== authState.session) {
+            updateAuthState(session);
+          }
+      }
     });
 
     // Initialiser

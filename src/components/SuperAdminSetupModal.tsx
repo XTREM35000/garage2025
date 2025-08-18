@@ -38,6 +38,9 @@ const SuperAdminSetupModal: React.FC<SuperAdminSetupModalProps> = ({
   isLoading,
   selectedPlan
 }) => {
+  // Ajout du state error
+  const [error, setError] = useState<string>('');
+
   // État du formulaire avec validation
   const [formData, setFormData] = useState({
     email: { value: '', error: '', isValid: false },
@@ -102,71 +105,50 @@ const SuperAdminSetupModal: React.FC<SuperAdminSetupModalProps> = ({
     return Object.values(formData).every(field => field.value && field.isValid);
   };
 
-  // Gestion de la soumission optimisée
+  // Gestion de la soumission optimisée - Nouvelle version en 2 étapes
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isFormValid() || isSubmitting) return;
-
     setIsSubmitting(true);
+    setError('');
 
     try {
-      // Création du compte Auth
-      const { data: authData, error: signUpError } = await supabase.auth.signUp({
-        email: formData.email.value,
-        password: formData.password.value,
-        options: {
-          data: {
-            name: formData.name.value,
-            phone: formData.phone.value
-          }
-        }
-      });
+      // 1. Valider les données
+      if (!formData.email.value || !formData.password.value || !formData.name.value) {
+        throw new Error('Tous les champs sont requis');
+      }
 
-      if (signUpError) throw signUpError;
-      if (!authData.user) throw new Error('User creation failed');
+      if (formData.password.value.length < PASSWORD_MIN_LENGTH) {
+        throw new Error(`Le mot de passe doit faire au moins ${PASSWORD_MIN_LENGTH} caractères`);
+      }
 
-      // Création du profil via la fonction qui contourne RLS
-      const { error: profileError } = await supabase.rpc('create_profile_bypass_rls', {
-        p_user_id: authData.user.id,
+      // 2. Créer le super admin via la fonction RPC
+      const { data, error: rpcError } = await supabase.rpc('create_super_admin', {
         p_email: formData.email.value,
-        p_name: formData.name.value,
-        p_role: mode === 'super-admin' ? 'superadmin' : 'admin'
+        p_password: formData.password.value,
+        p_name: formData.name.value
       });
 
-      if (profileError) {
-        console.error('❌ Erreur création profil:', profileError);
-        throw profileError;
+      if (rpcError) {
+        setError(rpcError.message);
+        throw rpcError;
       }
 
-      // Création dans la table appropriée selon le mode
-      if (mode === 'super-admin') {
-        const { error: adminError } = await supabase
-          .from('super_admins')
-          .insert([{
-            user_id: authData.user.id,
-            email: formData.email.value,
-            nom: formData.name.value,
-            prenom: '', // Champ requis mais pas utilisé
-            phone: formData.phone.value
-          }]);
-
-        if (adminError) throw adminError;
+      if (!data) {
+        throw new Error('Création échouée - aucune donnée retournée');
       }
 
-      // Afficher le message de succès
-      setShowSuccessMessage(true);
+      toast.success('Super admin créé avec succès ! Redémarrage en cours...');
       
-      // Notifier le succès
-      toast.success(`Compte ${mode === 'super-admin' ? 'Super Admin' : 'Admin'} créé avec succès!`);
-      
-      // Attendre un peu avant de continuer
+      // Attendre un peu pour que l'utilisateur voie le message de succès
       setTimeout(() => {
-        onComplete();
-      }, 1500);
+        // Force reload après création réussie
+        window.location.reload();
+      }, 2000);
 
     } catch (error: any) {
-      console.error('❌ Erreur création compte:', error);
-      toast.error(error.message || 'Erreur lors de la création');
+      console.error('❌ Erreur création super admin:', error);
+      setError(error.message || 'Erreur lors de la création');
+      toast.error(`Échec création : ${error.message}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -252,6 +234,13 @@ const SuperAdminSetupModal: React.FC<SuperAdminSetupModalProps> = ({
 
           {/* Body du formulaire */}
           <div className="modal-whatsapp-body">
+            {error && (
+              <div className="mb-4 p-3 rounded bg-red-50 border border-red-200 text-red-600">
+                <AlertCircle className="inline w-4 h-4 mr-2" />
+                {error}
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Champ Nom */}
               <div className="form-whatsapp-group">
