@@ -1,5 +1,5 @@
 import { toast } from 'sonner';
-import { WorkflowError, WorkflowStep } from '@/types/workflow';
+import { WorkflowError, WorkflowStep } from '@/types/workflow.d';
 
 // Types d'erreurs spécifiques
 export enum ErrorType {

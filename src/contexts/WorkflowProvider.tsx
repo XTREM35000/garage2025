@@ -4,10 +4,9 @@ import { useAuthSession } from '@/hooks/useAuthSession';
 import {
   WorkflowState,
   WorkflowContextType,
-  WorkflowStep,
-  getNextStep,
-  parseWorkflowState
-} from '@/types/workflow';
+  WorkflowStep
+} from '@/types/workflow.d';
+import { getNextStep } from '@/lib/workflow';
 
 const WorkflowContext = createContext<WorkflowContextType | undefined>(undefined);
 
@@ -142,6 +141,39 @@ export function WorkflowProvider({ children }: { children: React.ReactNode }) {
     }
   }, [state, user?.id]);
 
+  // Validation flexible des champs
+  const validateFormField = useCallback((field: string, value: string) => {
+    switch (field) {
+      case 'email':
+        // Validation souple : 2 caractères minimum, @ optionnel
+        const isValid = value.length >= 2;
+        return {
+          isValid,
+          error: isValid ? undefined : 'Email trop court (min 2 caractères)'
+        };
+      case 'password':
+        const passwordValid = value.length >= 8;
+        return {
+          isValid: passwordValid,
+          error: passwordValid ? undefined : 'Mot de passe trop court (min 8 caractères)'
+        };
+      case 'name':
+        const nameValid = value.trim().length > 0;
+        return {
+          isValid: nameValid,
+          error: nameValid ? undefined : 'Nom requis'
+        };
+      case 'phone':
+        const phoneValid = /^\+?\d{8,15}$/.test(value);
+        return {
+          isValid: phoneValid,
+          error: phoneValid ? undefined : 'Numéro de téléphone invalide'
+        };
+      default:
+        return { isValid: true };
+    }
+  }, []);
+
   // Reset workflow
   const reset = useCallback(async () => {
     if (!user?.id) return;
@@ -183,7 +215,8 @@ export function WorkflowProvider({ children }: { children: React.ReactNode }) {
     completeStep,
     reset,
     isLoading,
-    error
+    error,
+    validateFormField
   };
 
   return (
