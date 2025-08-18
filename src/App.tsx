@@ -22,7 +22,7 @@ import APropos from '@/pages/APropos';
 import NotFound from '@/pages/NotFound';
 
 // Composants
-import WorkflowGuardV2 from '@/components/WorkflowGuardV2';
+// WorkflowGuardV2 removed - using WorkflowGuard instead
 import WorkflowGuard from '@/components/WorkflowGuard';
 import SimpleAuthGuard from '@/components/SimpleAuthGuard';
 import PostAuthHandler from '@/components/PostAuthHandler';

@@ -41,7 +41,7 @@ const SimpleSetup: React.FC<SimpleSetupProps> = ({ onComplete, children }) => {
   // Render selon l'étape actuelle
   switch (currentStep) {
     case 'splash':
-      return <SplashScreen onComplete={() => setCurrentStep('pricing')} />;
+      return <SplashScreen visible onComplete={() => setCurrentStep('pricing')} />;
 
     case 'pricing':
       return (
