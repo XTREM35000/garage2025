@@ -8,13 +8,13 @@ import SmsValidationModal from '@/components/SmsValidationModal';
 import GarageSetupModal from '@/components/GarageSetupModal';
 import CompletionSummaryModal from '@/components/CompletionSummaryModal';
 import { useNavigate } from 'react-router-dom';
-import { WorkflowStep, WORKFLOW_STEPS, ExtendedInitializationStep } from '@/types/workflow';
+import { WorkflowStep, WORKFLOW_STEP_ORDER } from '@/types/workflow.d';
 import '../styles/whatsapp-theme.css';
 
 interface InitializationWizardProps {
   isOpen: boolean;
   onComplete: () => void;
-  startStep: ExtendedInitializationStep;
+  startStep: WorkflowStep;
   mode?: 'super-admin' | 'normal';
 }
 
@@ -39,7 +39,7 @@ const InitializationWizard: React.FC<InitializationWizardProps> = ({
   startStep,
   mode = 'normal'
 }) => {
-  const [currentStep, setCurrentStep] = useState<ExtendedInitializationStep>(startStep);
+  const [currentStep, setCurrentStep] = useState<WorkflowStep>(startStep);
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [adminData, setAdminData] = useState<AdminData>({
@@ -68,15 +68,8 @@ const InitializationWizard: React.FC<InitializationWizardProps> = ({
 
 
   // Calculer la progression du workflow
-  const calculateProgress = (step: ExtendedInitializationStep) => {
-    const stepOrder = [
-      WORKFLOW_STEPS.SUPER_ADMIN,
-      WORKFLOW_STEPS.PRICING,
-      WORKFLOW_STEPS.CREATE_ADMIN,
-      WORKFLOW_STEPS.CREATE_ORGANIZATION,
-      WORKFLOW_STEPS.SMS_VALIDATION,
-      WORKFLOW_STEPS.GARAGE_SETUP
-    ];
+  const calculateProgress = (step: WorkflowStep) => {
+    const stepOrder = WORKFLOW_STEP_ORDER.slice(0, -1); // Exclure 'dashboard'
     
     const currentIndex = stepOrder.indexOf(step as any);
     const stepNames = [
@@ -106,7 +99,7 @@ const InitializationWizard: React.FC<InitializationWizardProps> = ({
   useEffect(() => {
     console.log('🔄 Changement étape:', startStep, 'Mode:', mode);
     // Vérification que startStep est une étape valide
-    if (Object.values(WORKFLOW_STEPS).includes(startStep)) {
+    if (WORKFLOW_STEP_ORDER.includes(startStep)) {
       setCurrentStep(startStep);
     } else {
       console.error('Étape invalide:', startStep);
@@ -119,16 +112,16 @@ const InitializationWizard: React.FC<InitializationWizardProps> = ({
 
     try {
       switch (currentStep) {
-        case WORKFLOW_STEPS.SUPER_ADMIN:
-          setCurrentStep(WORKFLOW_STEPS.PRICING);
+        case 'super_admin_check':
+          setCurrentStep('pricing_selection');
           break;
 
-        case WORKFLOW_STEPS.PRICING:
+        case 'pricing_selection':
           setOrganizationData(prev => ({ ...prev, selectedPlan: stepData }));
-          setCurrentStep(WORKFLOW_STEPS.CREATE_ADMIN);
+          setCurrentStep('admin_creation');
           break;
 
-        case WORKFLOW_STEPS.CREATE_ADMIN:
+        case 'admin_creation':
           console.log('🔐 Admin créé, préparation pour la connexion...');
           setAdminData(stepData);
           
@@ -157,7 +150,7 @@ const InitializationWizard: React.FC<InitializationWizardProps> = ({
             const { data: { session: currentSession } } = await supabase.auth.getSession();
             if (currentSession?.user) {
               console.log('✅ Session confirmée pour:', currentSession.user.email);
-              setCurrentStep(WORKFLOW_STEPS.CREATE_ORGANIZATION);
+              setCurrentStep('org_creation');
             } else {
               console.error('❌ Session non établie après connexion');
               toast.error('Erreur: Session non établie');
@@ -168,16 +161,16 @@ const InitializationWizard: React.FC<InitializationWizardProps> = ({
           }
           break;
 
-        case WORKFLOW_STEPS.CREATE_ORGANIZATION:
+        case 'org_creation':
           setOrganizationData(stepData);
-          setCurrentStep(WORKFLOW_STEPS.SMS_VALIDATION);
+          setCurrentStep('sms_validation');
           break;
 
-        case WORKFLOW_STEPS.SMS_VALIDATION:
-          setCurrentStep(WORKFLOW_STEPS.GARAGE_SETUP);
+        case 'sms_validation':
+          setCurrentStep('garage_setup');
           break;
 
-        case WORKFLOW_STEPS.GARAGE_SETUP:
+        case 'garage_setup':
           console.log('✅ Workflow terminé!');
           // Terminer le workflow
           onComplete();
@@ -217,7 +210,7 @@ const InitializationWizard: React.FC<InitializationWizardProps> = ({
   // Rendu conditionnel avec logs explicites
   const renderCurrentStep = () => {
     switch (currentStep) {
-      case WORKFLOW_STEPS.SUPER_ADMIN:
+      case 'super_admin_check':
         console.log('👑 Affichage modal super admin');
         return (
           <SuperAdminSetupModal
@@ -235,7 +228,7 @@ const InitializationWizard: React.FC<InitializationWizardProps> = ({
           />
         );
 
-      case WORKFLOW_STEPS.PRICING:
+      case 'pricing_selection':
         console.log('💰 Affichage modal pricing');
         return (
           <PricingModal
@@ -244,7 +237,7 @@ const InitializationWizard: React.FC<InitializationWizardProps> = ({
           />
         );
 
-      case WORKFLOW_STEPS.CREATE_ADMIN:
+      case 'admin_creation':
         console.log('👤 Affichage modal création admin normal');
         return (
           <SuperAdminSetupModal
@@ -262,7 +255,7 @@ const InitializationWizard: React.FC<InitializationWizardProps> = ({
           />
         );
 
-      case WORKFLOW_STEPS.CREATE_ORGANIZATION:
+      case 'org_creation':
         console.log('🏢 Affichage modal organisation');
         return (
           <OrganizationSetupModal
@@ -272,7 +265,7 @@ const InitializationWizard: React.FC<InitializationWizardProps> = ({
           />
         );
 
-      case WORKFLOW_STEPS.SMS_VALIDATION:
+      case 'sms_validation':
         console.log('📱 Affichage modal SMS');
         return (
           <SmsValidationModal
@@ -284,7 +277,7 @@ const InitializationWizard: React.FC<InitializationWizardProps> = ({
           />
         );
 
-      case WORKFLOW_STEPS.GARAGE_SETUP:
+      case 'garage_setup':
         console.log('🔧 Affichage modal garage');
         return (
           <GarageSetupModal
@@ -300,7 +293,7 @@ const InitializationWizard: React.FC<InitializationWizardProps> = ({
           <div className="text-center py-8">
             <div className="text-red-500 text-lg">Étape inconnue</div>
             <button 
-              onClick={() => setCurrentStep(WORKFLOW_STEPS.SUPER_ADMIN)}
+              onClick={() => setCurrentStep('super_admin_check')}
               className="btn-whatsapp-primary mt-4"
             >
               Recommencer

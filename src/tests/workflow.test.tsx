@@ -244,7 +244,7 @@ describe('Workflow Scenarios', () => {
       const step = steps[i];
       expect(screen.getByText(step.replace('-', ' ').split(' ').map(word => 
         word.charAt(0).toUpperCase() + word.slice(1)
-      ).join(' ')).toBeInTheDocument();
+      ).join(' '))).toBeInTheDocument();
     }
   });
 

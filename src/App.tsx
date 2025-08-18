@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { ThemeProvider } from '@/contexts/ThemeContext';
-import { WorkflowProvider } from '@/contexts/WorkflowContext';
+import { WorkflowProvider } from '@/contexts/WorkflowProvider';
 import SplashScreen from '@/components/SplashScreen';
 
 // Pages
@@ -23,7 +23,7 @@ import NotFound from '@/pages/NotFound';
 
 // Composants
 import WorkflowGuardV2 from '@/components/WorkflowGuardV2';
-import FirstLaunchGuard from '@/components/FirstLaunchGuard';
+import WorkflowGuard from '@/components/WorkflowGuard';
 import SimpleAuthGuard from '@/components/SimpleAuthGuard';
 import PostAuthHandler from '@/components/PostAuthHandler';
 import ErrorBoundary from '@/components/ErrorBoundary';
@@ -36,7 +36,7 @@ import './App.css';
 
 // Composant wrapper pour les routes protégées avec le nouveau système de workflow
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <FirstLaunchGuard>
+  <WorkflowGuard>
     <SimpleAuthGuard>
       <PostAuthHandler>
         <UnifiedLayout>
@@ -46,7 +46,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
         </UnifiedLayout>
       </PostAuthHandler>
     </SimpleAuthGuard>
-  </FirstLaunchGuard>
+  </WorkflowGuard>
 );
 
 const App: React.FC = () => {
@@ -75,11 +75,9 @@ const App: React.FC = () => {
                     <Route
                       path="/"
                       element={
-                        <FirstLaunchGuard>
-                          <div className="min-h-screen bg-background">
-                            {/* Le FirstLaunchGuard gère l'affichage du workflow ou du dashboard */}
-                          </div>
-                        </FirstLaunchGuard>
+                        <WorkflowGuard>
+                          <Navigate to="/dashboard" replace />
+                        </WorkflowGuard>
                       }
                     />
 
