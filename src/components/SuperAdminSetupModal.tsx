@@ -10,6 +10,8 @@ import { toast } from 'sonner';
 import { AdminData, AdminMode } from '@/types/admin';
 import { AnimatedLogo } from './AnimatedLogo';
 import '../styles/whatsapp-theme.css';
+import { useWorkflow } from '@/contexts/WorkflowProvider'; // Ajout de l'import
+import { EmailField } from '@/components/ui/email-field';
 
 // Constantes pour la validation
 const PASSWORD_MIN_LENGTH = 8;
@@ -38,6 +40,8 @@ const SuperAdminSetupModal: React.FC<SuperAdminSetupModalProps> = ({
   isLoading,
   selectedPlan
 }) => {
+  const { completeStep } = useWorkflow(); // Récupération de completeStep depuis le context
+
   // Ajout du state error
   const [error, setError] = useState<string>('');
 
@@ -56,9 +60,11 @@ const SuperAdminSetupModal: React.FC<SuperAdminSetupModalProps> = ({
   const validateField = (field: string, value: string): { error: string; isValid: boolean } => {
     switch (field) {
       case 'email':
-        const emailValid = value.includes('@') && value.includes('.');
+        // Nouvelle validation spécifique gmail
+        const emailRegex = /^[a-z0-9._-]+@gmail\.com$/;
+        const emailValid = emailRegex.test(value);
         return {
-          error: emailValid ? '' : 'Email invalide',
+          error: emailValid ? '' : 'Format email invalide',
           isValid: emailValid
         };
       case 'password':
@@ -86,13 +92,12 @@ const SuperAdminSetupModal: React.FC<SuperAdminSetupModalProps> = ({
 
   // Mise à jour des champs avec validation
   const handleFieldChange = (field: string, value: string) => {
-    const validation = validateField(field, value);
     setFormData(prev => ({
       ...prev,
       [field]: {
         value,
-        error: validation.error,
-        isValid: validation.isValid
+        error: '',
+        isValid: true
       }
     }));
 
@@ -112,43 +117,52 @@ const SuperAdminSetupModal: React.FC<SuperAdminSetupModalProps> = ({
     setError('');
 
     try {
-      // 1. Valider les données
-      if (!formData.email.value || !formData.password.value || !formData.name.value) {
-        throw new Error('Tous les champs sont requis');
-      }
+      console.log('🚀 Tentative création super admin...');
 
-      if (formData.password.value.length < PASSWORD_MIN_LENGTH) {
-        throw new Error(`Le mot de passe doit faire au moins ${PASSWORD_MIN_LENGTH} caractères`);
-      }
+      // Extraction des valeurs propres
+      const email = formData.email.value;
+      const password = formData.password.value;
+      const name = formData.name.value;
 
-      // 2. Créer le super admin via la fonction RPC
-      const { data, error: rpcError } = await supabase.rpc('create_super_admin', {
-        p_email: formData.email.value,
-        p_password: formData.password.value,
-        p_name: formData.name.value
+      // Appel RPC avec les bonnes valeurs
+      const { data, error } = await supabase.rpc('create_super_admin', {
+        p_email: email,
+        p_password: password,
+        p_name: name
       });
 
-      if (rpcError) {
-        setError(rpcError.message);
-        throw rpcError;
+      console.log('📦 Réponse RPC:', data);
+
+      if (error || !data?.success) {
+        throw new Error(data?.message || error?.message || 'Échec de la création');
       }
 
-      if (!data) {
-        throw new Error('Création échouée - aucune donnée retournée');
+      // Connexion automatique
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password
+      });
+
+      if (signInError) {
+        throw signInError;
       }
 
-      toast.success('Super admin créé avec succès ! Redémarrage en cours...');
-      
-      // Attendre un peu pour que l'utilisateur voie le message de succès
+      // Notification et mise à jour workflow
+      toast.success('Super administrateur créé avec succès!');
+      await completeStep('super_admin_check');
+
+      // Afficher message succès avant redirection
+      setShowSuccessMessage(true);
+
+      // Délai court avant complétion
       setTimeout(() => {
-        // Force reload après création réussie
-        window.location.reload();
-      }, 2000);
+        onComplete();
+      }, 1500);
 
     } catch (error: any) {
-      console.error('❌ Erreur création super admin:', error);
+      console.error('❌ Erreur création:', error);
       setError(error.message || 'Erreur lors de la création');
-      toast.error(`Échec création : ${error.message}`);
+      toast.error(error.message || 'Erreur lors de la création');
     } finally {
       setIsSubmitting(false);
     }
@@ -272,22 +286,14 @@ const SuperAdminSetupModal: React.FC<SuperAdminSetupModalProps> = ({
                   <Mail className="inline w-4 h-4 mr-2" />
                   Adresse email
                 </Label>
-                <Input
+                <EmailField
                   id="email"
-                  type="email"
                   value={formData.email.value}
-                  onChange={(e) => handleFieldChange('email', e.target.value)}
-                  className={`form-whatsapp-input ${formData.email.error ? 'error' : ''}`}
+                  onChange={(value) => handleFieldChange('email', value)}
                   disabled={isSubmitting}
                   required
-                  placeholder="exemple@email.com"
+                  error={formData.email.error}
                 />
-                {formData.email.error && (
-                  <div className="form-whatsapp-error">
-                    <AlertCircle className="inline w-3 h-3 mr-1" />
-                    {formData.email.error}
-                  </div>
-                )}
               </div>
 
               {/* Champ Téléphone */}

@@ -1,8 +1,13 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthSession } from '@/hooks/useAuthSession';
-import type { WorkflowState, WorkflowContextType, WorkflowStep } from '@/types/workflow';
-import { getNextStep } from '@/lib/workflow'; // Import depuis le fichier d'implémentation
+import {
+  WorkflowState,
+  WorkflowContextType,
+  WorkflowStep,
+  getNextStep,
+  parseWorkflowState
+} from '@/types/workflow';
 
 const WorkflowContext = createContext<WorkflowContextType | undefined>(undefined);
 
@@ -10,6 +15,8 @@ const initialState: WorkflowState = {
   currentStep: 'super_admin_check',
   completedSteps: [],
   isDemo: false,
+  loading: false,
+  error: null
 };
 
 export function WorkflowProvider({ children }: { children: React.ReactNode }) {
