@@ -9,48 +9,24 @@ export const WORKFLOW_STEPS = {
   COMPLETE: 'complete'
 } as const;
 
-export type WorkflowStep = keyof typeof WORKFLOW_STEPS;
-export type ExtendedInitializationStep = WorkflowStep;
-export type WorkflowState = 'loading' | 'needs-init' | 'needs-auth' | 'ready' | 'completed';
+export type WorkflowStep =
+  | 'super_admin_check'
+  | 'pricing_selection'
+  | 'admin_creation'
+  | 'org_creation'
+  | 'sms_validation'
+  | 'garage_setup'
+  | 'dashboard';
 
-// Nouveaux types pour le système workflow_states
-export interface WorkflowStateData {
-  current_step: string;
-  loading: boolean;
-  last_updated: string;
-  data?: Record<string, any>;
-}
-
-export interface WorkflowContextType {
-  state: WorkflowStateData | null;
+export interface WorkflowState {
   currentStep: WorkflowStep;
-  isLoading: boolean;
-  error: WorkflowError | null;
-  refresh: () => Promise<void>;
-  updateStep: (step: WorkflowStep, data?: Partial<WorkflowStateData>) => Promise<void>;
-  completeStep: (step: WorkflowStep) => Promise<void>;
-  resetWorkflow: () => Promise<void>;
-}
-
-export interface WorkflowError {
-  step: string;
-  type: 'rpc' | 'auth' | 'rls' | 'network';
-  message: string;
-  timestamp: Date;
-  details?: any;
-}
-
-export interface WorkflowTransition {
-  from: WorkflowStep;
-  to: WorkflowStep;
-  timestamp: Date;
-  success: boolean;
+  loading: boolean;
+  data?: Record<string, any>;
   error?: string;
 }
 
-export interface WorkflowLog {
-  id: string;
-  user_id: string;
-  transition: WorkflowTransition;
-  metadata?: Record<string, any>;
+export interface WorkflowContextType {
+  state: WorkflowState;
+  updateStep: (step: WorkflowStep, data?: any) => Promise<void>;
+  resetWorkflow: () => void;
 }

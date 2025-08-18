@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthSession } from '@/hooks/useAuthSession';
-import { WorkflowState, WorkflowContextType, WorkflowStep, getNextStep } from '@/types/workflow.d';
+import type { WorkflowState, WorkflowContextType, WorkflowStep } from '@/types/workflow';
+import { getNextStep } from '@/lib/workflow'; // Import depuis le fichier d'implémentation
 
 const WorkflowContext = createContext<WorkflowContextType | undefined>(undefined);
 
@@ -23,7 +24,7 @@ export function WorkflowProvider({ children }: { children: React.ReactNode }) {
 
     try {
       console.log('📊 [WorkflowProvider] Synchronisation état workflow pour user:', user.id);
-      
+
       const { data, error: fetchError } = await supabase
         .from('workflow_states')
         .select('*')
@@ -63,7 +64,7 @@ export function WorkflowProvider({ children }: { children: React.ReactNode }) {
     try {
       // Vérifier si c'est un super admin
       const { data: isSuperAdmin } = await supabase.rpc('is_super_admin');
-      
+
       const newState = {
         ...initialState,
         userId: user.id,
@@ -99,7 +100,7 @@ export function WorkflowProvider({ children }: { children: React.ReactNode }) {
 
       const nextStep = getNextStep(step);
       const newCompletedSteps = [...state.completedSteps];
-      
+
       if (!newCompletedSteps.includes(step)) {
         newCompletedSteps.push(step);
       }

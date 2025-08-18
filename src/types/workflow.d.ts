@@ -1,4 +1,5 @@
-export type WorkflowStep = 
+// src/types/workflow.d.ts
+export type WorkflowStep =
   | 'super_admin_check'
   | 'pricing_selection'
   | 'admin_creation'
@@ -24,17 +25,6 @@ export interface WorkflowContextType {
   error: string | null;
 }
 
-export const WORKFLOW_STEP_ORDER: WorkflowStep[] = [
-  'super_admin_check',
-  'pricing_selection', 
-  'admin_creation',
-  'org_creation',
-  'sms_validation',
-  'garage_setup',
-  'dashboard'
-];
-
-export const getNextStep = (currentStep: WorkflowStep): WorkflowStep => {
-  const currentIndex = WORKFLOW_STEP_ORDER.indexOf(currentStep);
-  return WORKFLOW_STEP_ORDER[currentIndex + 1] || 'dashboard';
-};
+// Déclarations seulement (pas d'implémentation)
+export declare const WORKFLOW_STEP_ORDER: WorkflowStep[];
+export declare function getNextStep(currentStep: WorkflowStep): WorkflowStep;
